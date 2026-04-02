@@ -1,5 +1,5 @@
 {
-  "name": "mcp-readonly",
+  "name": "@readonly-mcp/core",
   "version": "1.0.0",
   "type": "module",
   "private": true,

@@ -1,4 +1,4 @@
-# mcp-readonly
+# @readonly-mcp/core
 
 A security-hardened [Model Context Protocol](https://modelcontextprotocol.io/) server that gives AI agents read-only access to CLI tools. Designed for auto-allow environments where the allowlist is the sole security boundary against prompt injection.
 
@@ -114,7 +114,7 @@ Read-only Atlassian CLI commands: `jira board list`, `jira filter list`, `jira p
   "mcpServers": {
     "readonly": {
       "command": "node",
-      "args": ["path/to/mcp-readonly/index.mjs"]
+      "args": ["path/to/@readonly-mcp/core/index.mjs"]
     }
   }
 }
