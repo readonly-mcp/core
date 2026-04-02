@@ -107,23 +107,41 @@ Read-only Atlassian CLI commands: `jira board list`, `jira filter list`, `jira p
 
 **Schema:** `{ args: string[] }`
 
-## Setup
+## Installation
+
+```bash
+pnpm add -g github:readonly-mcp/core
+```
+
+### Claude Code
+
+```bash
+claude mcp add -s user readonly -- node "$(pnpm root -g)/@readonly-mcp/core/index.mjs"
+```
+
+### VS Code / Copilot
+
+Add to your `settings.json`:
 
 ```json
 {
-  "mcpServers": {
-    "readonly": {
-      "command": "node",
-      "args": ["path/to/@readonly-mcp/core/index.mjs"]
+  "mcp": {
+    "servers": {
+      "readonly": {
+        "command": "node",
+        "args": ["/path/to/global/node_modules/@readonly-mcp/core/index.mjs"]
+      }
     }
   }
 }
 ```
 
+Replace `/path/to/global/node_modules` with the output of `pnpm root -g`.
+
 ## Development
 
 ```bash
-pnpm install
+pnpm install   # first time only
 pnpm test
 ```
 
