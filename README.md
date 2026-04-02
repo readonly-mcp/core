@@ -119,6 +119,18 @@ pnpm add -g github:readonly-mcp/core
 claude mcp add -s user readonly -- node "$(pnpm root -g)/@readonly-mcp/core/index.mjs"
 ```
 
+To auto-approve all readonly tools, add to `~/.claude/settings.json`:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__readonly__*"
+    ]
+  }
+}
+```
+
 ### VS Code / Copilot
 
 Add to your `settings.json`:
