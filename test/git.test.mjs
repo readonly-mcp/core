@@ -283,7 +283,15 @@ describe.concurrent("git tool (integration)", () => {
       assertNotBlocked(expect, await server.callTool("git", { args: ["remote", "get-url", "--all", "origin"] }));
     });
 
-    it.for(["show", "add", "remove", "rename", "set-url", "set-head", "prune", "update"])(
+    it("allows remote show -n origin", async ({ expect }) => {
+      assertNotBlocked(expect, await server.callTool("git", { args: ["remote", "show", "-n", "origin"] }));
+    });
+
+    it("blocks remote show without -n (SSRF risk)", async ({ expect }) => {
+      assertBlocked(expect, await server.callTool("git", { args: ["remote", "show", "origin"] }));
+    });
+
+    it.for(["add", "remove", "rename", "set-url", "set-head", "prune", "update"])(
       "blocks remote %s", async (sub, { expect }) => {
         assertBlocked(expect, await server.callTool("git", { args: ["remote", sub, "origin"] }));
       },

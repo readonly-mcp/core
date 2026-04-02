@@ -30,11 +30,11 @@ const WORKTREE_ALLOWED_SUBS = new Set(["list"]);
 const REFLOG_ALLOWED_SUBS = new Set(["show", "exists"]);
 
 // Only these sub-subcommands (or none) are allowed for `git remote`
-// `show` is excluded because it triggers network I/O to the remote
-const REMOTE_ALLOWED_SUBS = new Set(["get-url"]);
+const REMOTE_ALLOWED_SUBS = new Set(["get-url", "show"]);
 
-// Only these flags are allowed for `git remote` (bare listing and get-url)
-const REMOTE_ALLOWED_FLAGS = new Set(["-v", "--verbose", "--push", "--all"]);
+// Only these flags are allowed for `git remote` (bare listing and get-url/show)
+// `-n` is required for `show` to prevent network I/O (SSRF via malicious remotes)
+const REMOTE_ALLOWED_FLAGS = new Set(["-v", "--verbose", "--push", "--all", "-n"]);
 
 const IS_WIN = process.platform === "win32";
 
@@ -125,6 +125,9 @@ export const register = (server) =>
         const remoteSub = remoteArgs.find((a) => !a.startsWith("-"));
         if (remoteSub && !REMOTE_ALLOWED_SUBS.has(remoteSub))
           return fail(`Subcommand not allowed for git remote: ${remoteSub}. Allowed: (none), ${[...REMOTE_ALLOWED_SUBS].join(", ")}`);
+        // `remote show` requires `-n` to prevent network I/O (SSRF risk)
+        if (remoteSub === "show" && !remoteArgs.includes("-n"))
+          return fail("git remote show requires -n (no network I/O)");
         const blockedFlag = remoteArgs.filter((a) => a.startsWith("-")).find((a) => !REMOTE_ALLOWED_FLAGS.has(a));
         if (blockedFlag) return fail(`Flag not allowed for git remote: ${blockedFlag}`);
       }

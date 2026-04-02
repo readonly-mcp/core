@@ -57,7 +57,7 @@ Additional restrictions:
 - `stash`: only `list` and `show` sub-subcommands (`--` treated as terminator)
 - `worktree`: only `list` (mutating: `add`, `remove`, `move`, `prune`, etc.)
 - `reflog`: only `show`, `exists`, and bare invocation (destructive: `delete`, `expire`)
-- `remote`: only bare listing and `get-url` (no `show` — triggers network I/O)
+- `remote`: only bare listing, `get-url`, and `show -n` (no network I/O)
 
 **Schema:** `{ args: string[] }`
 
