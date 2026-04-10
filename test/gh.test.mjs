@@ -95,6 +95,7 @@ describe.concurrent("gh tool (unit)", () => {
   describe("api endpoint handling", () => {
     it.for([
       ["api", "repos/o/r/pulls/1/comments"],
+      ["api", "repos/o/r/pulls/1/comments/3065485880"],
       ["api", "repos/o/r/pulls/1/reviews"],
       ["api", "repos/o/r/pulls/1/reviews/2/comments"],
       ["api", "repos/o/r/deployments"],

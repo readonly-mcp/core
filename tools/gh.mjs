@@ -33,6 +33,7 @@ const API_PATHS = [
   // PR review comments (primary motivator — gh pr view --json comments misses
   // inline review comments; only returns issue/conversation comments)
   "repos/*/*/pulls/*/comments",
+  "repos/*/*/pulls/*/comments/*",
   "repos/*/*/pulls/*/reviews",
   "repos/*/*/pulls/*/reviews/*/comments",
   // Deployments (no gh subcommand)
