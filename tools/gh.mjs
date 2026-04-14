@@ -41,8 +41,9 @@ const API_PATHS = [
   "repos/*/*/deployments/*/statuses",
   // Check annotations (no gh subcommand for annotations specifically)
   "repos/*/*/check-runs/*/annotations",
-  // Commits list, statuses, and checks (no gh subcommand)
+  // Commits list, statuses, checks, and individual commit details (files changed)
   "repos/*/*/commits",
+  "repos/*/*/commits/*",
   "repos/*/*/commits/*/status",
   "repos/*/*/commits/*/statuses",
   "repos/*/*/commits/*/check-runs",

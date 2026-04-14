@@ -102,6 +102,7 @@ describe.concurrent("gh tool (unit)", () => {
       ["api", "repos/o/r/deployments/1/statuses"],
       ["api", "repos/o/r/check-runs/1/annotations"],
       ["api", "repos/o/r/commits"],
+      ["api", "repos/o/r/commits/abc"],
       ["api", "repos/o/r/commits/abc/status"],
       ["api", "repos/o/r/commits/abc/statuses"],
       ["api", "repos/o/r/commits/abc/check-runs"],
