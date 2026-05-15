@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * Read-only MCP server for AI agents.
  *

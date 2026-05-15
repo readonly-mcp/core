@@ -116,7 +116,7 @@ pnpm add -g github:readonly-mcp/core
 ### Claude Code
 
 ```bash
-claude mcp add -s user readonly -- node "$(pnpm root -g)/@readonly-mcp/core/index.mjs"
+claude mcp add -s user readonly -- readonly-mcp
 ```
 
 To auto-approve all readonly tools, add to `~/.claude/settings.json`:
@@ -140,15 +140,12 @@ Add to your `settings.json`:
   "mcp": {
     "servers": {
       "readonly": {
-        "command": "node",
-        "args": ["/path/to/global/node_modules/@readonly-mcp/core/index.mjs"]
+        "command": "readonly-mcp"
       }
     }
   }
 }
 ```
-
-Replace `/path/to/global/node_modules` with the output of `pnpm root -g`.
 
 ## Development
 
