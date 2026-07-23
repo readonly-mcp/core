@@ -7,7 +7,8 @@
     "readonly-mcp": "index.mjs"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=18",
+    "pnpm": ">=10.16.0"
   },
   "scripts": {
     "test": "vitest run"
@@ -19,5 +20,6 @@
   "devDependencies": {
     "typescript": "^6.0.3",
     "vitest": "^4.1.6"
-  }
+  },
+  "packageManager": "pnpm@11.3.0"
 }
