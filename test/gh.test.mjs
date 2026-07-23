@@ -113,6 +113,7 @@ describe.concurrent("gh tool (unit)", () => {
       ["api", "repos/o/r/contents"],
       ["api", "repos/o/r/contents/README.md"],
       ["api", "repos/o/r/contents/src/main.js"],
+      ["api", "user"],
     ].map(args => ({ name: args[1], args })))(
       "allows api $name", async ({ args }, { expect }) => {
         assertAllowed(expect, await callMocked(args));

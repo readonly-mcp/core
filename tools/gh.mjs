@@ -57,6 +57,10 @@ const API_PATHS = [
   // Repository contents (bare = directory listing, ** = file/nested path)
   "repos/*/*/contents",
   "repos/*/*/contents/**",
+  // Authenticated viewer identity (`gh api user` — who am I). Single segment,
+  // so it does not match multi-segment paths like user/repos or user/orgs,
+  // which stay blocked.
+  "user",
 ];
 
 // --method / -X: override HTTP verb to POST/PUT/DELETE/PATCH
@@ -75,7 +79,7 @@ const API_BLOCKED_FLAGS = new Set([
 export const register = (server) =>
   server.tool(
     "gh",
-    "Run read-only GitHub CLI commands (--version, --help, attestation verify, cache list, gist list/view, issue list/status/view, label list, pr checks/diff/list/status/view, project field-list/item-list/list/view, release list/view, repo list/view, ruleset check/list/view, run list/view, search code/commits/issues/prs/repos, secret list, status, variable list, workflow list/view, api GET: pulls/reviews+reviewers, deployments+environments, check-runs+suites, commits+statuses, compare, contents)",
+    "Run read-only GitHub CLI commands (--version, --help, attestation verify, cache list, gist list/view, issue list/status/view, label list, pr checks/diff/list/status/view, project field-list/item-list/list/view, release list/view, repo list/view, ruleset check/list/view, run list/view, search code/commits/issues/prs/repos, secret list, status, variable list, workflow list/view, api GET: pulls/reviews+reviewers, deployments+environments, check-runs+suites, commits+statuses, compare, contents, user)",
     ArgsSchema,
     async ({ args }) => {
       const isGlobal = args.length === 1 && GLOBAL_FLAGS.has(args[0]);
