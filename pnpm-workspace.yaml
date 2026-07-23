@@ -1,2 +1,8 @@
 allowBuilds:
   esbuild: true
+
+# 4320 minutes = 3 days, matching the shared Renovate preset's quarantine.
+minimumReleaseAge: 4320
+minimumReleaseAgeExclude:
+  - '@gtbuchanan/*'
+  - '@readonly-mcp/*'
