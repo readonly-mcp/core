@@ -41,6 +41,13 @@
  *   tea treats `-name` like `--name`, so blocked flags are matched in both forms.
  *   `--repo` is restricted to `owner/name` slugs: it also accepts a local path,
  *   which would act as a `cwd` parameter.
+ * - tea api path allowlisting: same segment matching as gh api, with `--method
+ *   GET` injected after the endpoint. Blocked flags: `--method`/`-X`, body
+ *   flags `-f`/`--field`, `-F`/`--Field` and `-d`/`--data` (which default the
+ *   method to POST, and `-F`/`-d` read @file), `-H`/`--header`, and
+ *   `-o`/`--output` (writes the response to a path). `.` and `..` segments,
+ *   plain or percent-encoded, are rejected: `contents/**` and `raw/**` take
+ *   any depth, so a dot segment could climb out to an unlisted endpoint.
  * - --registry blocked: prevents SSRF / data exfiltration to attacker-controlled registries.
  *   Uses prefix matching because npm/pnpm expand abbreviated flags internally
  *   (e.g., `--reg` resolves to `--registry`). Exact matching would be bypassable.
@@ -85,6 +92,9 @@
  * - `az` non-invoke subcommands: no flag filtering is applied. The allowlisted
  *   commands (`list`, `show`) are inherently read-only. If future az CLI versions
  *   add mutating flags to these commands, they would pass through unchecked.
+ * - `tea api`: Forgejo echoes a rejected token in its error body (`access
+ *   token does not exist [sha: …]`), so a call made with a revoked token
+ *   prints the credential. No flag causes it, so no flag check can stop it.
  * - `jq --jsonargs` / `--args`: not handled by the file-path validator, which
  *   may false-positive on legitimate uses. The error direction is safe (blocks
  *   rather than allows). These flags are uncommon in MCP agent usage.

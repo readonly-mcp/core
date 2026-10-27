@@ -84,6 +84,10 @@ Additional restrictions:
 - `--debug`/`--vvv` blocked; `labels --save` blocked (writes a file)
 - `logins helper` (alias `git-credential`) excluded: it is a git credential helper that prints the token
 
+`api` is restricted to GET requests against `repos/*/*/pulls/*/reviews`, `repos/*/*/pulls/*/reviews/*/comments`, `repos/*/*/commits/*/status`, `repos/*/*/commits/*/statuses`, `repos/*/*/contents[/**]`, `repos/*/*/raw/**` and `user`. `{owner}` and `{repo}` placeholders are accepted. `--method GET` is injected after the endpoint; request-body flags (`-f`, `-F`, `-d`), `-X`, `-H` and `-o` (writes the response to a file) are blocked, and `.`/`..` segments are rejected, percent-encoded or not. Use `raw/**` for file contents: `contents/**` returns them base64-encoded in JSON.
+
+**Token exposure the tool cannot block:** Forgejo echoes a rejected token in its error body (`access token does not exist [sha: …]`), so any `tea api` call made with a revoked token prints the credential. No flag causes it.
+
 **Schema:** `{ args: string[] }`
 
 ### `az`
