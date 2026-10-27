@@ -32,6 +32,15 @@
  *   Full URLs (http/https) are rejected — only relative paths accepted.
  *   Short-flag concatenation (-XPOST) is caught by the prefix matcher's
  *   short-flag rule.
+ * - tea alias resolution: every tea noun and verb has aliases (`pr`, `ms`,
+ *   `ls`, `git-credential`), so args are resolved to canonical names before
+ *   matching and executed under those names. Unknown aliases stay unresolved
+ *   and are rejected. Commands that act without a verb (`tea pulls 2`) but
+ *   have children dispatch to any positional naming a child, even after flags,
+ *   so they accept only flags of known arity and validate every positional.
+ *   tea treats `-name` like `--name`, so blocked flags are matched in both forms.
+ *   `--repo` is restricted to `owner/name` slugs: it also accepts a local path,
+ *   which would act as a `cwd` parameter.
  * - --registry blocked: prevents SSRF / data exfiltration to attacker-controlled registries.
  *   Uses prefix matching because npm/pnpm expand abbreviated flags internally
  *   (e.g., `--reg` resolves to `--registry`). Exact matching would be bypassable.
@@ -91,6 +100,10 @@
  * - `git diff --no-index`: reads arbitrary files outside the repo via git's
  *   diff machinery, bypassing the "git operations only" intent.
  * - `git --output` / `-o`: writes diff/log output to a file.
+ * - `tea logins helper` (alias `git-credential`): a git credential helper,
+ *   whose protocol answers with the token on stdout.
+ * - `tea --debug` / `--vvv`: may print the Authorization header.
+ * - `tea labels --save`: writes the label set to a file.
  */
 import { createRequire } from "node:module";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
