@@ -23,6 +23,8 @@
     "pnpm": ">=10.16.0"
   },
   "scripts": {
+    "build": "pnpm run compile:ts && node scripts/stage-package.mjs",
+    "compile:ts": "tsc -p tsconfig.build.json",
     "test": "vitest run",
     "typecheck:ts": "tsc"
   },

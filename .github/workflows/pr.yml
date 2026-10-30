@@ -18,6 +18,8 @@ jobs:
 
       - run: pnpm run typecheck:ts
 
+      - run: pnpm run build
+
       - run: pnpm test
 
 name: PR

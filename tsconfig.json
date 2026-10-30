@@ -1,8 +1,12 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "noEmit": true
+    "erasableSyntaxOnly": true,
+    "noEmit": true,
+    "rewriteRelativeImportExtensions": true,
+    "verbatimModuleSyntax": true
   },
+  "exclude": ["dist"],
   "extends": ["@gtbuchanan/tsconfig/node.json"],
   "include": ["**/*.mjs", "**/*.ts"]
 }

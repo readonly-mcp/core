@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "dist/source",
+    "rootDir": "."
+  },
+  "extends": "./tsconfig.json",
+  "include": ["index.mjs", "lib/**/*", "tools/**/*"]
+}
