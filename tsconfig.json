@@ -8,5 +8,5 @@
   },
   "exclude": ["dist"],
   "extends": ["@gtbuchanan/tsconfig/node.json"],
-  "include": ["**/*.mjs", "**/*.ts"]
+  "include": ["**/*.ts"]
 }

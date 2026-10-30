@@ -16,7 +16,7 @@ tools/
 scripts/
   stage-package.ts  Stages the npm package in dist/source (`pnpm run build`)
 test/
-  <tool>.test.mjs   Per-tool security + functionality tests
+  <tool>.test.ts    Per-tool security + functionality tests
   shell-injection.test.ts   Cross-tool injection attack tests
   helpers.ts        Shared test utilities
 ```
@@ -41,7 +41,7 @@ These are non-negotiable. Every change must preserve them:
 1. Use `rejectSubcommand()` and `rejectBlockedFlags()` from `lib/allowlist.ts`
 1. Use `exec()` from `lib/exec.ts` — never `child_process` directly
 1. Re-export from `tools/index.ts`
-1. Add tests in `test/<name>.test.mjs` covering allowed commands, blocked
+1. Add tests in `test/<name>.test.ts` covering allowed commands, blocked
    subcommands, blocked flags, and injection attempts. Write each `vi.mock`
    path with the module's `.ts` specifier: vitest matches it exactly, and a
    stale path silently leaves the real module in place.
@@ -68,4 +68,6 @@ If you relax a restriction, justify it in the commit message.
 
 ## Formatting
 
-See `.editorconfig`. ESM only (`.mjs`).
+See `.editorconfig`. TypeScript, ESM only. Import relative modules by their
+`.ts` path: Node runs the sources directly, and `tsc` resolves a `.js`
+specifier that Node then cannot find.
