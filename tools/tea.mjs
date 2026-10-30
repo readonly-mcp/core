@@ -204,7 +204,11 @@ const isPlainSegment = (segment) => {
   }
 };
 
+// The URL parser cuts the path at `#`, so a fragment inside a wildcard
+// segment (repos/admin#/x/contents/y) would request a truncated endpoint the
+// allowlist never named.
 const isAllowedEndpoint = (endpoint) =>
+  !endpoint.includes("#") &&
   matchesApiPath(endpoint, API_PATHS) &&
   normalizeApiPath(endpoint).split("/").every(isPlainSegment);
 

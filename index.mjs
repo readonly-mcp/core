@@ -48,6 +48,8 @@
  *   `-o`/`--output` (writes the response to a path). `.` and `..` segments,
  *   plain or percent-encoded, are rejected: `contents/**` and `raw/**` take
  *   any depth, so a dot segment could climb out to an unlisted endpoint.
+ *   Endpoints containing `#` are rejected: the URL parser cuts the path at
+ *   the fragment, so `repos/admin#/x/contents/y` would request `repos/admin`.
  * - --registry blocked: prevents SSRF / data exfiltration to attacker-controlled registries.
  *   Uses prefix matching because npm/pnpm expand abbreviated flags internally
  *   (e.g., `--reg` resolves to `--registry`). Exact matching would be bypassable.

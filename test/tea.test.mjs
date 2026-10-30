@@ -187,6 +187,10 @@ describe.concurrent("tea tool (unit)", () => {
       ["api", "repos/o/r/contents/..%2f..%2f..%2f..%2fadmin/users"],
       ["api", "repos/o/r/contents/..%5c..%5cadmin"],
       ["api", "repos/o/r/contents/%zz"],
+      // The URL parser cuts the path at `#`, so a fragment hidden in a
+      // wildcard segment would send the request to a truncated endpoint.
+      ["api", "repos/admin#/x/contents/y"],
+      ["api", "repos/o/r/contents/README.md#L1"],
     ].map(args => ({ name: args.slice(1).join(" ") || "(bare)", args })))(
       "blocks api $name", async ({ args }, { expect }) => {
         expect((await callMocked(args)).isError).toBeTruthy();
