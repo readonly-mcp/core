@@ -6,7 +6,7 @@ See `README.md` for the full security model and tool reference.
 ## Architecture
 
 ```
-index.mjs           Server entry point (security rationale in header comment)
+index.ts            Server entry point (security rationale in header comment)
 lib/
   allowlist.ts      Allowlist matching, flag blocking, JSON array coercion
   exec.ts           Sandboxed command execution (execFile, no shell)
@@ -29,7 +29,7 @@ These are non-negotiable. Every change must preserve them:
 - **`execFile`, no shell** — prevents metacharacter injection
 - **Prefix flag matching** — defeats CLI flag abbreviation bypass
 - **No `cwd` parameter** — except when validated against an enumerable trusted source
-  (see `cwd` exception criteria in `index.mjs` header)
+  (see `cwd` exception criteria in `index.ts` header)
 
 ## Adding a New Tool
 

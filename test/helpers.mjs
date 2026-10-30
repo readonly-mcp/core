@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import { createInterface } from "node:readline";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const SERVER_PATH = join(__dirname, "..", "index.mjs");
+const SERVER_PATH = join(__dirname, "..", "index.ts");
 
 export const startServer = () => {
   const proc = spawn("node", [SERVER_PATH], {

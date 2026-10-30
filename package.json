@@ -11,10 +11,10 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "readonly-mcp": "index.mjs"
+    "readonly-mcp": "./dist/source/index.js"
   },
   "files": [
-    "index.mjs",
+    "index.js",
     "lib/",
     "tools/"
   ],
@@ -39,7 +39,10 @@
     "vitest": "^4.1.6"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "bin": {
+      "readonly-mcp": "./index.js"
+    }
   },
   "packageManager": "pnpm@11.3.0"
 }

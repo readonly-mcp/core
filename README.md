@@ -178,7 +178,7 @@ pnpm test
 ## Project structure
 
 ```
-index.mjs           Server entry point
+index.ts            Server entry point
 lib/
   allowlist.ts      Allowlist matching and validation
   exec.ts           Sandboxed command execution
