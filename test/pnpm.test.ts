@@ -1,22 +1,23 @@
-import { describe, it, beforeAll, afterAll, vi } from "vitest";
-import { connectTool, startServer, assertBlocked, assertNotBlocked } from "./helpers.ts";
+import { describe, it, beforeAll, afterAll, vi, type ExpectStatic } from "vitest";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { connectTool, startServer, assertBlocked, assertNotBlocked, textOf } from "./helpers.ts";
 
 // --- Unit tests (mocked execShell) ---
 vi.mock("../lib/exec.ts", () => ({
-  execShell: async (_cmd, args) => ({
+  execShell: async (_cmd: string, args: readonly string[]) => ({
     content: [{ type: "text", text: JSON.stringify(args) }],
   }),
-  fail: (msg) => ({ content: [{ type: "text", text: msg }], isError: true }),
+  fail: (msg: string) => ({ content: [{ type: "text", text: msg }], isError: true }),
 }));
 
 const { register } = await import("../tools/pnpm.ts");
 
 const callTool = await connectTool(register);
 
-const callMocked = (args) => callTool({ args });
+const callMocked = (args: readonly string[]) => callTool({ args });
 
-const assertAllowed = (expect, result) => {
-  expect(result?.isError, `expected allowed, got: ${result?.content?.[0]?.text}`).toBeFalsy();
+const assertAllowed = (expect: ExpectStatic, result: CallToolResult) => {
+  expect(result.isError, `expected allowed, got: ${textOf(result)}`).toBeFalsy();
 };
 
 describe.concurrent("pnpm tool (unit)", () => {
@@ -49,7 +50,7 @@ describe.concurrent("pnpm tool (unit)", () => {
 
 // --- Integration tests (real MCP server) ---
 describe.concurrent("pnpm tool (integration)", () => {
-  let server;
+  let server: ReturnType<typeof startServer>;
   beforeAll(async () => { server = startServer(); await server.initialize(); });
   afterAll(() => server.close());
 
