@@ -1,4 +1,4 @@
-export { register as acli } from "./acli.mjs";
+export { register as acli } from "./acli.ts";
 export { register as az } from "./az.mjs";
 export { register as chezmoi } from "./chezmoi.mjs";
 export { register as gh } from "./gh.mjs";

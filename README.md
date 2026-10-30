@@ -184,7 +184,7 @@ lib/
   exec.ts           Sandboxed command execution
 tools/
   index.mjs         Tool registry
-  acli.mjs          Atlassian CLI tool
+  acli.ts           Atlassian CLI tool
   az.mjs            Azure DevOps CLI tool
   chezmoi.mjs       Chezmoi tool
   gh.mjs            GitHub CLI tool

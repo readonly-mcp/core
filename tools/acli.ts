@@ -1,3 +1,4 @@
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { exec } from "../lib/exec.ts";
 import { ArgsSchema, matchesAllowlist, rejectSubcommand } from "../lib/allowlist.ts";
 
@@ -12,7 +13,7 @@ const SUBCOMMANDS = new Set([
   "jira workitem view",
 ]);
 
-export const register = (server) =>
+export const register = (server: McpServer) =>
   server.tool(
     "acli",
     "Run read-only Atlassian CLI commands (jira board/filter/project/sprint/workitem list/search/view/comment list)",
