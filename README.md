@@ -186,7 +186,7 @@ tools/
   index.mjs         Tool registry
   acli.ts           Atlassian CLI tool
   az.mjs            Azure DevOps CLI tool
-  chezmoi.mjs       Chezmoi tool
+  chezmoi.ts        Chezmoi tool
   gh.mjs            GitHub CLI tool
   git.mjs           Git tool
   npm.mjs           npm tool

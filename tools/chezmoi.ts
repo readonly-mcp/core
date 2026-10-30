@@ -1,3 +1,4 @@
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { exec } from "../lib/exec.ts";
 import { ArgsSchema, matchesAllowlist, rejectSubcommand } from "../lib/allowlist.ts";
 
@@ -6,7 +7,7 @@ const SUBCOMMANDS = new Set([
   "source-path", "status", "target-path", "verify",
 ]);
 
-export const register = (server) =>
+export const register = (server: McpServer) =>
   server.tool(
     "chezmoi",
     "Run read-only chezmoi commands (diff, doctor, managed, source-path, status, target-path, verify)",
