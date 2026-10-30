@@ -16,6 +16,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - run: pnpm run typecheck:ts
+
       - run: pnpm test
 
 name: PR

@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "extends": ["@gtbuchanan/tsconfig/node.json"],
+  "include": ["**/*.mjs", "**/*.ts"]
+}
