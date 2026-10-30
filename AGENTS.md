@@ -17,7 +17,7 @@ scripts/
   stage-package.ts  Stages the npm package in dist/source (`pnpm run build`)
 test/
   <tool>.test.mjs   Per-tool security + functionality tests
-  shell-injection.test.mjs   Cross-tool injection attack tests
+  shell-injection.test.ts   Cross-tool injection attack tests
   helpers.ts        Shared test utilities
 ```
 

@@ -1,13 +1,13 @@
-import { describe, it, beforeAll, afterAll } from "vitest";
+import { describe, it, beforeAll, afterAll, type ExpectStatic } from "vitest";
 import { tmpdir } from "node:os";
 import { mkdtemp, writeFile, readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
-import { startServer } from "./helpers.ts";
+import { startServer, assertBlocked } from "./helpers.ts";
 
 describe.concurrent("shell injection", () => {
-  let server;
-  let tmpDir;
-  let canaryFile;
+  let server: ReturnType<typeof startServer>;
+  let tmpDir: string;
+  let canaryFile: string;
 
   beforeAll(async () => {
     server = startServer();
@@ -22,7 +22,7 @@ describe.concurrent("shell injection", () => {
     await rm(tmpDir, { recursive: true });
   });
 
-  const assertCanaryIntact = async (expect, label) => {
+  const assertCanaryIntact = async (expect: ExpectStatic, label: string) => {
     const content = await readFile(canaryFile, "utf8");
     expect(content, `canary modified by ${label}`).toBe("ORIGINAL");
   };
@@ -81,8 +81,7 @@ describe.concurrent("shell injection", () => {
   describe("blocked rm via shell tool", () => {
     it("blocks rm and preserves canary", async ({ expect }) => {
       const result = await server.callTool("shell", { command: "rm", args: [canaryFile] });
-      const txt = result?.content?.[0]?.text || "";
-      expect(result?.isError || txt.includes("not allowed")).toBe(true);
+      assertBlocked(expect, result);
       await assertCanaryIntact(expect, "shell rm");
     });
   });
