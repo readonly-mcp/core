@@ -6,4 +6,4 @@ export { register as git } from "./git.ts";
 export { register as npm } from "./npm.ts";
 export { register as pnpm } from "./pnpm.ts";
 export { register as shell } from "./shell.ts";
-export { register as tea } from "./tea.mjs";
+export { register as tea } from "./tea.ts";

@@ -1,3 +1,5 @@
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { exec, fail } from "../lib/exec.ts";
 import {
   ArgsSchema, rejectSubcommand, rejectBlockedFlags,
@@ -9,7 +11,7 @@ const GLOBAL_FLAGS = new Set(["--help", "--version", "-h", "-v"]);
 // Aliases from `tea <noun> --help` (tea 0.16.0). Only nouns and verbs with an
 // allowed command are listed: anything else stays unresolved and is rejected,
 // so a missing alias fails closed.
-const NOUN_ALIASES = {
+const NOUN_ALIASES: Record<string, readonly string[]> = {
   branches: ["b", "branch"],
   comments: ["c", "comment"],
   issues: ["i", "issue"],
@@ -22,7 +24,7 @@ const NOUN_ALIASES = {
   whoami: [],
 };
 
-const VERB_ALIASES = {
+const VERB_ALIASES: Record<string, Record<string, readonly string[]>> = {
   branches: { list: ["ls"] },
   comments: { list: ["ls"] },
   issues: { list: ["ls"] },
@@ -35,9 +37,9 @@ const VERB_ALIASES = {
   whoami: {},
 };
 
-const resolverOf = (aliases) => new Map(
+const resolverOf = (aliases: Record<string, readonly string[]>): Map<string, string> => new Map(
   Object.entries(aliases).flatMap(([name, alts]) =>
-    [name, ...alts].map((alias) => [alias, name])),
+    [name, ...alts].map((alias): [string, string] => [alias, name])),
 );
 
 const NOUNS = resolverOf(NOUN_ALIASES);
@@ -68,7 +70,13 @@ const SHARED_VALUE_FLAGS = [
   "R", "r", "remote", "repo", "state",
 ];
 
-const BARE = {
+type BarePolicy = {
+  booleans: ReadonlySet<string>;
+  positional: (arg: string) => boolean;
+  values: ReadonlySet<string>;
+};
+
+const BARE: Record<string, BarePolicy> = {
   issues: {
     booleans: new Set(["comments", "h", "help"]),
     positional: (arg) => /^\d+$/.test(arg),
@@ -93,36 +101,36 @@ const BARE = {
 // tea (urfave/cli) treats `-name` and `--name` alike, so `-debug` must be
 // caught as `--debug`. Single-dash forms are lengthened for the prefix
 // matcher; single-letter flags already match as short flags.
-const toLongForm = (arg) => /^-[^-][^=]/.test(arg) ? "-" + arg : arg;
+const toLongForm = (arg: string): string => /^-[^-][^=]/.test(arg) ? "-" + arg : arg;
 
-const flagName = (arg) => arg.replace(/^--?/, "").split("=")[0];
+const flagName = (arg: string): string => arg.replace(/^--?/, "").split("=")[0] ?? "";
 
-const isFlag = (arg) => arg.startsWith("-") && arg !== "-" && arg !== "--";
+const isFlag = (arg: string): boolean => arg.startsWith("-") && arg !== "-" && arg !== "--";
 
 // --debug / --vvv: may print the Authorization header, like gh --verbose.
 const BLOCKED_FLAGS = new Set(["--debug", "--vvv"]);
 
 // labels --save / -s: writes the label set to a file.
-const NOUN_BLOCKED_FLAGS = { labels: new Set(["--save", "-s"]) };
+const NOUN_BLOCKED_FLAGS: Record<string, ReadonlySet<string>> = { labels: new Set(["--save", "-s"]) };
 
-const rejectFlags = (args, blocked) =>
+const rejectFlags = (args: readonly string[], blocked: ReadonlySet<string>): CallToolResult | null =>
   rejectBlockedFlags(args, blocked) ??
   rejectBlockedFlags(args.map(toLongForm), blocked);
 
 // --repo also accepts a local repository path, which would point tea at a
 // directory outside the server's working directory. Only `owner/name` slugs
 // pass; `.` and `..` segments are paths, not names.
-const isRepoSlug = (value) =>
+const isRepoSlug = (value: string): boolean =>
   /^[\w.-]+\/[\w.-]+$/.test(value) &&
   value.split("/").every((segment) => !/^\.+$/.test(segment));
 
-const repoValues = (args) => args.flatMap((arg, i) => {
+const repoValues = (args: readonly string[]): string[] => args.flatMap((arg, i) => {
   if (!isFlag(arg) || !["r", "repo"].includes(flagName(arg))) return [];
   const eq = arg.indexOf("=");
   return [eq === -1 ? args[i + 1] ?? "" : arg.slice(eq + 1)];
 });
 
-const rejectRepoPath = (args) => {
+const rejectRepoPath = (args: readonly string[]): CallToolResult | null => {
   const path = repoValues(args).find((value) => !isRepoSlug(value));
   return path === undefined ? null : fail(`--repo must be an owner/name slug, not a path: ${path}`);
 };
@@ -130,15 +138,16 @@ const rejectRepoPath = (args) => {
 // Walks the args after a bare command, consuming each flag's value by arity.
 // Unknown flags are rejected because their arity, and so whether the next arg
 // is a value or a positional, cannot be known.
-const rejectBareArgs = (args, { booleans, positional, values }) => {
-  const step = (i, positionals, endOfOptions) => {
-    if (i >= args.length) {
+const rejectBareArgs = (args: readonly string[], { booleans, positional, values }: BarePolicy): CallToolResult | null => {
+  const step = (i: number, positionals: readonly string[], endOfOptions: boolean): CallToolResult | null => {
+    // Past the end, whether by one or by a skipped flag value.
+    const arg = args[i];
+    if (arg === undefined) {
       if (positionals.length > 1)
         return fail(`At most one positional argument allowed, got: ${positionals.join(" ")}`);
-      const invalid = positionals.find((arg) => !positional(arg));
+      const invalid = positionals.find((p) => !positional(p));
       return invalid === undefined ? null : fail(`Positional argument not allowed: ${invalid}`);
     }
-    const arg = args[i];
     if (endOfOptions || !arg.startsWith("-") || arg === "-")
       return step(i + 1, [...positionals, arg], endOfOptions);
     if (arg === "--") return step(i + 1, positionals, true);
@@ -150,10 +159,11 @@ const rejectBareArgs = (args, { booleans, positional, values }) => {
   return step(0, [], false);
 };
 
-const resolve = (args) => {
-  const noun = NOUNS.get(args[0]);
+const resolve = (args: readonly string[]) => {
+  const [first, second] = args;
+  const noun = first === undefined ? undefined : NOUNS.get(first);
   if (!noun) return null;
-  const verb = VERBS[noun].get(args[1]);
+  const verb = second === undefined ? undefined : VERBS[noun]?.get(second);
   return verb
     ? { command: [noun, verb], key: `${noun} ${verb}`, noun, rest: args.slice(2) }
     : { command: [noun], key: noun, noun, rest: args.slice(1) };
@@ -197,7 +207,7 @@ const API_BLOCKED_FLAGS = new Set([
 // Undecodable segments are rejected rather than guessed at, and so is a dot or
 // separator still encoded after one decode (%252e), which a second decode
 // anywhere downstream would resolve.
-const isPlainSegment = (segment) => {
+const isPlainSegment = (segment: string): boolean => {
   try {
     const decoded = decodeURIComponent(segment);
     return !/^\.+$/.test(decoded) && !/[/\\]/.test(decoded) &&
@@ -210,12 +220,12 @@ const isPlainSegment = (segment) => {
 // The URL parser cuts the path at `#`, so a fragment inside a wildcard
 // segment (repos/admin#/x/contents/y) would request a truncated endpoint the
 // allowlist never named.
-const isAllowedEndpoint = (endpoint) =>
+const isAllowedEndpoint = (endpoint: string): boolean =>
   !endpoint.includes("#") &&
   matchesApiPath(endpoint, API_PATHS) &&
   normalizeApiPath(endpoint).split("/").every(isPlainSegment);
 
-const runApi = (args) => {
+const runApi = (args: readonly string[]): Promise<CallToolResult> | CallToolResult => {
   const endpoint = args[1];
   if (!endpoint || endpoint.startsWith("-") || !isAllowedEndpoint(endpoint))
     return rejectApiEndpoint(endpoint, API_PATHS);
@@ -230,13 +240,14 @@ const runApi = (args) => {
   return exec("tea", ["api", endpoint, "--method", "GET", ...rest]);
 };
 
-export const register = (server) =>
+export const register = (server: McpServer) =>
   server.tool(
     "tea",
     "Run read-only Gitea/Forgejo CLI commands (--version, --help, branches list, comments list, issues [index]/list, labels list, logins list, milestones issues/list, pulls [index]/list/review-comments, releases list, repos list/search, whoami, api GET: pulls/reviews, commits/status+statuses, contents, raw, user)",
     ArgsSchema,
     async ({ args }) => {
-      const isGlobal = args.length === 1 && GLOBAL_FLAGS.has(args[0]);
+      const [only, ...others] = args;
+      const isGlobal = only !== undefined && others.length === 0 && GLOBAL_FLAGS.has(only);
       if (isGlobal) return exec("tea", args);
       if (args[0] === "api") return runApi(args);
 

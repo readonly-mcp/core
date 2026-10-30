@@ -192,6 +192,6 @@ tools/
   npm.ts            npm tool
   pnpm.ts           pnpm tool
   shell.ts          Shell utilities tool
-  tea.mjs           Gitea/Forgejo CLI tool
+  tea.ts            Gitea/Forgejo CLI tool
 test/               Unit and integration tests (vitest)
 ```
