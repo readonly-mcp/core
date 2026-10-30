@@ -14,7 +14,7 @@ tools/
   index.ts          Tool registry (barrel export)
   <tool>.ts         One file per CLI tool (git, gh, az, npm, pnpm, chezmoi, acli, shell, tea)
 scripts/
-  stage-package.mjs Stages the npm package in dist/source (`pnpm run build`)
+  stage-package.ts  Stages the npm package in dist/source (`pnpm run build`)
 test/
   <tool>.test.mjs   Per-tool security + functionality tests
   shell-injection.test.mjs   Cross-tool injection attack tests

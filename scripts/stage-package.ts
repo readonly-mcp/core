@@ -8,7 +8,8 @@
  * lives; publishConfig.bin holds the path relative to the package root. pnpm
  * applies that override on publish and npm does not, so it is applied here.
  */
-import { copyFileSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, writeFileSync } from "node:fs";
+import packageJson from "../package.json" with { type: "json" };
 
 const OUT_DIR = "dist/source";
 
@@ -16,7 +17,7 @@ const {
   devDependencies, packageManager, scripts,
   publishConfig: { bin, ...publishConfig },
   ...manifest
-} = JSON.parse(readFileSync("package.json", "utf8"));
+} = packageJson;
 
 writeFileSync(
   `${OUT_DIR}/package.json`,
