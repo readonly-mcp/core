@@ -4,6 +4,7 @@ import {
   ArgsSchema, matchesAllowlist, rejectSubcommand, rejectBlockedFlags,
   matchesApiPath, rejectApiEndpoint,
 } from "../lib/allowlist.ts";
+import { textOf } from "./helpers.ts";
 
 describe("ArgsSchema coercion", () => {
   const schema = z.object(ArgsSchema);
@@ -127,18 +128,18 @@ describe("rejectSubcommand", () => {
 
   it("includes the rejected subcommand in message", ({ expect }) => {
     const result = rejectSubcommand(["delete"], allowlist);
-    expect(result.content[0].text).toContain("delete");
+    expect(textOf(result)).toContain("delete");
   });
 
   it("includes allowed subcommands in message", ({ expect }) => {
     const result = rejectSubcommand(["delete"], allowlist);
-    expect(result.content[0].text).toContain("list");
-    expect(result.content[0].text).toContain("view");
+    expect(textOf(result)).toContain("list");
+    expect(textOf(result)).toContain("view");
   });
 
   it("shows (none) for empty args", ({ expect }) => {
     const result = rejectSubcommand([], allowlist);
-    expect(result.content[0].text).toContain("(none)");
+    expect(textOf(result)).toContain("(none)");
   });
 });
 
@@ -258,7 +259,7 @@ describe("rejectBlockedFlags", () => {
 
     it("reports the first blocked flag found", ({ expect }) => {
       const result = rejectBlockedFlags(["audit", "--fix", "--registry"], blocked);
-      expect(result.content[0].text).toContain("--fix");
+      expect(textOf(result)).toContain("--fix");
     });
   });
 });
@@ -373,16 +374,16 @@ describe("rejectApiEndpoint", () => {
 
   it("includes normalized endpoint in message", ({ expect }) => {
     const result = rejectApiEndpoint("/repos/owner/bad/path?foo=bar", patterns);
-    expect(result.content[0].text).toContain("repos/owner/bad/path");
+    expect(textOf(result)).toContain("repos/owner/bad/path");
   });
 
   it("includes allowed patterns in message", ({ expect }) => {
     const result = rejectApiEndpoint("bad/path", patterns);
-    expect(result.content[0].text).toContain("repos/*/pulls/*/comments");
+    expect(textOf(result)).toContain("repos/*/pulls/*/comments");
   });
 
   it("shows (none) for undefined endpoint", ({ expect }) => {
     const result = rejectApiEndpoint(undefined, patterns);
-    expect(result.content[0].text).toContain("(none)");
+    expect(textOf(result)).toContain("(none)");
   });
 });

@@ -87,10 +87,10 @@ export const startServer = () => {
 };
 
 /** The text of a result's first content item, which must be text. */
-export const textOf = (result: CallToolResult): string => {
-  const first = result.content[0];
+export const textOf = (result: CallToolResult | null): string => {
+  const first = result?.content[0];
   if (first?.type !== "text")
-    throw new Error(`Expected a text content item, got: ${JSON.stringify(result.content)}`);
+    throw new Error(`Expected a text content item, got: ${JSON.stringify(result)}`);
   return first.text;
 };
 
