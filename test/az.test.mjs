@@ -14,7 +14,7 @@ vi.mock("../lib/exec.ts", () => ({
   fail: (msg) => ({ content: [{ type: "text", text: msg }], isError: true }),
 }));
 
-const { register } = await import("../tools/az.mjs");
+const { register } = await import("../tools/az.ts");
 
 let handler;
 register({ tool: (_, __, ___, fn) => { handler = fn; } });

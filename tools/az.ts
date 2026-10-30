@@ -1,3 +1,5 @@
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { execShell, fail } from "../lib/exec.ts";
 import { ArgsSchema, matchesAllowlist, rejectSubcommand } from "../lib/allowlist.ts";
 
@@ -43,18 +45,20 @@ const INVOKE_ALLOWED_ENDPOINTS = new Set([
   "test/runs",
 ]);
 
-const flagValues = (args, flag) => {
-  const values = [];
+const flagValues = (args: readonly string[], flag: string): string[] => {
+  const values: string[] = [];
   for (const a of args) {
     if (a.startsWith(flag + "=")) values.push(a.slice(flag.length + 1));
   }
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === flag && i + 1 < args.length) values.push(args[i + 1]);
+    // A following argument exists exactly when i + 1 is within the length.
+    const next = args[i + 1];
+    if (args[i] === flag && next !== undefined) values.push(next);
   }
   return values;
 };
 
-const rejectInvokeEndpoint = (args) => {
+const rejectInvokeEndpoint = (args: readonly string[]): CallToolResult | null => {
   const areas = flagValues(args, "--area");
   const resources = flagValues(args, "--resource");
   if (areas.length === 0)
@@ -71,7 +75,7 @@ const rejectInvokeEndpoint = (args) => {
     : fail(`Endpoint not allowed for devops invoke: --area ${areas[0]} --resource ${resources[0]}. Allowed: ${[...INVOKE_ALLOWED_ENDPOINTS].join(", ")}`);
 };
 
-export const register = (server) =>
+export const register = (server: McpServer) =>
   server.tool(
     "az",
     "Run read-only Azure DevOps CLI commands (devops invoke for GET-only REST API limited to build-debugging endpoints, devops project/team/extension/service-endpoint/wiki, pipelines list/show/build/release/runs/pool/agent). Prefer dedicated subcommands when available; use devops invoke only for endpoints without a CLI equivalent (e.g., build logs/timeline).",
@@ -84,7 +88,7 @@ export const register = (server) =>
         // blocks unknown short flags (e.g., `-X`) that could bypass the `--`-only
         // check. Flag values for known flags (e.g., `--area build`) are not
         // checked here because they don't start with `-` in normal usage.
-        const unknownFlag = args.slice(2).find((a) => a.startsWith("-") && !INVOKE_ALLOWED_FLAGS.has(a.split("=")[0]));
+        const unknownFlag = args.slice(2).find((a) => a.startsWith("-") && !INVOKE_ALLOWED_FLAGS.has(a.split("=")[0] ?? a));
         if (unknownFlag) return fail(`Flag not allowed: ${unknownFlag}`);
         const endpointRejection = rejectInvokeEndpoint(args);
         if (endpointRejection) return endpointRejection;
