@@ -1,3 +1,4 @@
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { execShell } from "../lib/exec.ts";
 import { ArgsSchema, matchesAllowlist, rejectSubcommand, rejectBlockedFlags } from "../lib/allowlist.ts";
 
@@ -10,7 +11,7 @@ const SUBCOMMANDS = new Set([
 // --no-ignore-scripts: overrides the injected --ignore-scripts (npm uses last-wins)
 const BLOCKED_FLAGS = new Set(["--fix", "--registry", "--no-ignore-scripts", "--ignore-scripts"]);
 
-export const register = (server) =>
+export const register = (server: McpServer) =>
   server.tool(
     "npm",
     "Run read-only npm commands (audit, bin, explain, fund, ls, outdated, root, search, view)",

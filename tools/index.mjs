@@ -3,7 +3,7 @@ export { register as az } from "./az.mjs";
 export { register as chezmoi } from "./chezmoi.ts";
 export { register as gh } from "./gh.mjs";
 export { register as git } from "./git.mjs";
-export { register as npm } from "./npm.mjs";
+export { register as npm } from "./npm.ts";
 export { register as pnpm } from "./pnpm.mjs";
 export { register as shell } from "./shell.mjs";
 export { register as tea } from "./tea.mjs";

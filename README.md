@@ -189,7 +189,7 @@ tools/
   chezmoi.ts        Chezmoi tool
   gh.mjs            GitHub CLI tool
   git.mjs           Git tool
-  npm.mjs           npm tool
+  npm.ts            npm tool
   pnpm.mjs          pnpm tool
   shell.mjs         Shell utilities tool
   tea.mjs           Gitea/Forgejo CLI tool
