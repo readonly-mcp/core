@@ -188,7 +188,7 @@ tools/
   az.ts             Azure DevOps CLI tool
   chezmoi.ts        Chezmoi tool
   gh.ts             GitHub CLI tool
-  git.mjs           Git tool
+  git.ts            Git tool
   npm.ts            npm tool
   pnpm.ts           pnpm tool
   shell.ts          Shell utilities tool

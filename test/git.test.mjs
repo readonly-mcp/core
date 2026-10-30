@@ -12,7 +12,7 @@ vi.mock("../lib/exec.ts", () => ({
   fail: (msg) => ({ content: [{ type: "text", text: msg }], isError: true }),
 }));
 
-const { register } = await import("../tools/git.mjs");
+const { register } = await import("../tools/git.ts");
 
 let handler;
 register({ tool: (_, __, ___, fn) => { handler = fn; } });

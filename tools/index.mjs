@@ -2,7 +2,7 @@ export { register as acli } from "./acli.ts";
 export { register as az } from "./az.ts";
 export { register as chezmoi } from "./chezmoi.ts";
 export { register as gh } from "./gh.ts";
-export { register as git } from "./git.mjs";
+export { register as git } from "./git.ts";
 export { register as npm } from "./npm.ts";
 export { register as pnpm } from "./pnpm.ts";
 export { register as shell } from "./shell.ts";

@@ -1,3 +1,4 @@
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 import { z } from "zod";
@@ -53,7 +54,7 @@ const getWorktreePaths = () => {
   }
 };
 
-const isKnownWorktree = (dir) => {
+const isKnownWorktree = (dir: string): boolean => {
   const target = resolve(dir);
   return getWorktreePaths().some((wt) =>
     IS_WIN ? wt.toLowerCase() === target.toLowerCase() : wt === target,
@@ -66,14 +67,14 @@ const GitSchema = {
     .describe("Working directory (must be a git worktree of this repo). Pass when operating from a linked worktree."),
 };
 
-export const register = (server) =>
+export const register = (server: McpServer) =>
   server.tool(
     "git",
     "Run read-only git commands (blame, branch, describe, diff, log, ls-files, ls-tree, merge-base, reflog, remote, rev-parse, shortlog, show, stash, status, worktree). Pass cwd when operating from a linked worktree.",
     GitSchema,
     async ({ args, cwd }) => {
       const sub = args[0];
-      if (!SUBCOMMANDS.has(sub)) return rejectSubcommand(args, SUBCOMMANDS);
+      if (sub === undefined || !SUBCOMMANDS.has(sub)) return rejectSubcommand(args, SUBCOMMANDS);
       // Block -o short flag on diff only: standalone (-o), concatenated (-ofile),
       // or combined with other short flags (-ao, -abo/tmp/evil.txt).
       // Only diff has --output; other commands use -o for unrelated flags
@@ -81,7 +82,7 @@ export const register = (server) =>
       if (sub === "diff") {
         const shortO = args.slice(1).find((a) =>
           a.startsWith("-") && !a.startsWith("--") && a !== "-" &&
-          [...a.slice(1).split("=")[0]].includes("o"),
+          [...(a.slice(1).split("=")[0] ?? a.slice(1))].includes("o"),
         );
         if (shortO) return fail(`Flag not allowed: ${shortO}`);
       }
