@@ -1,3 +1,4 @@
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { exec } from "../lib/exec.ts";
 import {
   ArgsSchema, matchesAllowlist, rejectSubcommand,
@@ -76,13 +77,14 @@ const API_BLOCKED_FLAGS = new Set([
   "-H", "--header",
 ]);
 
-export const register = (server) =>
+export const register = (server: McpServer) =>
   server.tool(
     "gh",
     "Run read-only GitHub CLI commands (--version, --help, attestation verify, cache list, gist list/view, issue list/status/view, label list, pr checks/diff/list/status/view, project field-list/item-list/list/view, release list/view, repo list/view, ruleset check/list/view, run list/view, search code/commits/issues/prs/repos, secret list, status, variable list, workflow list/view, api GET: pulls/reviews+reviewers, deployments+environments, check-runs+suites, commits+statuses, compare, contents, user)",
     ArgsSchema,
     async ({ args }) => {
-      const isGlobal = args.length === 1 && GLOBAL_FLAGS.has(args[0]);
+      const [only, ...rest] = args;
+      const isGlobal = only !== undefined && rest.length === 0 && GLOBAL_FLAGS.has(only);
       if (isGlobal) return exec("gh", args);
 
       if (args[0] === "api") {

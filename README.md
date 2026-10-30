@@ -187,7 +187,7 @@ tools/
   acli.ts           Atlassian CLI tool
   az.ts             Azure DevOps CLI tool
   chezmoi.ts        Chezmoi tool
-  gh.mjs            GitHub CLI tool
+  gh.ts             GitHub CLI tool
   git.mjs           Git tool
   npm.ts            npm tool
   pnpm.ts           pnpm tool

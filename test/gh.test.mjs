@@ -9,7 +9,7 @@ vi.mock("../lib/exec.ts", () => ({
   fail: (msg) => ({ content: [{ type: "text", text: msg }], isError: true }),
 }));
 
-const { register } = await import("../tools/gh.mjs");
+const { register } = await import("../tools/gh.ts");
 
 let handler;
 register({ tool: (_, __, ___, fn) => { handler = fn; } });
