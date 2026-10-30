@@ -18,7 +18,7 @@ scripts/
 test/
   <tool>.test.mjs   Per-tool security + functionality tests
   shell-injection.test.mjs   Cross-tool injection attack tests
-  helpers.mjs       Shared test utilities
+  helpers.ts        Shared test utilities
 ```
 
 ## Security Principles

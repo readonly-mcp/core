@@ -1,5 +1,5 @@
 import { describe, it, beforeAll, afterAll, vi } from "vitest";
-import { startServer, assertBlocked, assertNotBlocked } from "./helpers.mjs";
+import { startServer, assertBlocked, assertNotBlocked } from "./helpers.ts";
 
 // --- Unit tests (mocked execShell) ---
 // Allowed paths hit the real `az` CLI which is slow (~1-2s per call),

@@ -2,7 +2,7 @@ import { describe, it, beforeAll, afterAll } from "vitest";
 import { tmpdir } from "node:os";
 import { mkdtemp, writeFile, readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
-import { startServer } from "./helpers.mjs";
+import { startServer } from "./helpers.ts";
 
 describe.concurrent("shell injection", () => {
   let server;

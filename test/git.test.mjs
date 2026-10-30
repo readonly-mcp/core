@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, it, beforeAll, afterAll, vi } from "vitest";
-import { startServer, assertBlocked, assertNotBlocked } from "./helpers.mjs";
+import { startServer, assertBlocked, assertNotBlocked } from "./helpers.ts";
 
 // --- Unit tests (mocked exec) ---
 vi.mock("../lib/exec.ts", () => ({

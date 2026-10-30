@@ -4,13 +4,24 @@
  * Spawns the MCP server as a child process and communicates over JSON-RPC/stdio.
  */
 
+import { CallToolResultSchema, type CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { spawn } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createInterface } from "node:readline";
+import type { ExpectStatic } from "vitest";
+import { z } from "zod";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SERVER_PATH = join(__dirname, "..", "index.ts");
+
+const ResponseSchema = z.object({
+  error: z.object({ message: z.string() }).optional(),
+  id: z.number(),
+  result: z.unknown(),
+});
+
+type Response = z.infer<typeof ResponseSchema>;
 
 export const startServer = () => {
   const proc = spawn("node", [SERVER_PATH], {
@@ -19,24 +30,27 @@ export const startServer = () => {
   });
 
   const rl = createInterface({ input: proc.stdout });
-  const pending = new Map();
-  const timers = new Map();
+  const pending = new Map<number, (msg: Response) => void>();
+  const timers = new Map<number, NodeJS.Timeout>();
   let nextId = 1;
 
   rl.on("line", (line) => {
     try {
-      const msg = JSON.parse(line);
-      if (msg.id && pending.has(msg.id)) {
+      const parsed = ResponseSchema.safeParse(JSON.parse(line));
+      if (!parsed.success) return;
+      const msg = parsed.data;
+      const resolve = pending.get(msg.id);
+      if (resolve) {
         clearTimeout(timers.get(msg.id));
         timers.delete(msg.id);
-        pending.get(msg.id)(msg);
+        resolve(msg);
         pending.delete(msg.id);
       }
     } catch { /* ignore non-JSON lines */ }
   });
 
-  const send = (method, params) =>
-    new Promise((resolve, reject) => {
+  const send = (method: string, params: unknown) =>
+    new Promise<Response>((resolve, reject) => {
       const id = nextId++;
       pending.set(id, resolve);
       const msg = JSON.stringify({ jsonrpc: "2.0", id, method, params });
@@ -57,10 +71,10 @@ export const startServer = () => {
       clientInfo: { name: "test", version: "1.0.0" },
     });
 
-  const callTool = async (name, args) => {
+  const callTool = async (name: string, args: unknown): Promise<CallToolResult> => {
     const resp = await send("tools/call", { name, arguments: args });
     if (resp.error) return { isError: true, content: [{ type: "text", text: resp.error.message }] };
-    return resp.result;
+    return CallToolResultSchema.parse(resp.result);
   };
 
   const close = () => {
@@ -72,11 +86,12 @@ export const startServer = () => {
   return { initialize, callTool, close };
 };
 
-export const assertBlocked = (expect, result, message) => {
-  const txt = result?.content?.[0]?.text || "";
-  expect(result?.isError || txt.includes("not allowed"), message).toBe(true);
+export const assertBlocked = (expect: ExpectStatic, result: CallToolResult, message?: string) => {
+  const first = result.content[0];
+  const txt = first?.type === "text" ? first.text : "";
+  expect(result.isError || txt.includes("not allowed"), message).toBe(true);
 };
 
-export const assertNotBlocked = (expect, result, message) => {
-  expect(result?.isError, message).toBeFalsy();
+export const assertNotBlocked = (expect: ExpectStatic, result: CallToolResult, message?: string) => {
+  expect(result.isError, message).toBeFalsy();
 };

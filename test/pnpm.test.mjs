@@ -1,5 +1,5 @@
 import { describe, it, beforeAll, afterAll, vi } from "vitest";
-import { startServer, assertBlocked, assertNotBlocked } from "./helpers.mjs";
+import { startServer, assertBlocked, assertNotBlocked } from "./helpers.ts";
 
 // --- Unit tests (mocked execShell) ---
 vi.mock("../lib/exec.ts", () => ({

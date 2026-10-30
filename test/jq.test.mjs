@@ -2,7 +2,7 @@ import { describe, it, beforeAll, afterAll } from "vitest";
 import { tmpdir } from "node:os";
 import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { join } from "node:path";
-import { startServer, assertBlocked, assertNotBlocked } from "./helpers.mjs";
+import { startServer, assertBlocked, assertNotBlocked } from "./helpers.ts";
 
 describe.concurrent("jq file argument blocking", () => {
   let server;
