@@ -1,6 +1,7 @@
 import { exec, fail } from "../lib/exec.mjs";
 import {
   ArgsSchema, rejectSubcommand, rejectBlockedFlags,
+  matchesApiPath, rejectApiEndpoint, normalizeApiPath,
 } from "../lib/allowlist.mjs";
 
 const GLOBAL_FLAGS = new Set(["--help", "--version", "-h", "-v"]);
@@ -160,14 +161,84 @@ const resolve = (args) => {
 
 const ALLOWED = new Set([...LEAVES, ...Object.keys(BARE)]);
 
+// tea substitutes {owner} and {repo} from the repository context; `*` already
+// matches them as literal segments.
+const API_PATHS = [
+  "repos/*/*/commits/*/status",
+  "repos/*/*/commits/*/statuses",
+  // Bare = directory listing, ** = file or nested path. Files come back as
+  // base64 in JSON; raw/** serves them as plain text, since Gitea and
+  // Forgejo have no raw Accept media type.
+  "repos/*/*/contents",
+  "repos/*/*/contents/**",
+  "repos/*/*/pulls/*/reviews",
+  "repos/*/*/pulls/*/reviews/*/comments",
+  "repos/*/*/raw/**",
+  // Authenticated viewer identity. Single segment, so user/repos and the
+  // like stay blocked.
+  "user",
+];
+
+// --method / -X: overrides the GET injected below
+// --field / -f / --Field / -F / --data / -d: request body, which defaults the
+//   method to POST; -F and -d also read @file
+// --header / -H: arbitrary HTTP header injection
+// --output / -o: writes the response body to a path
+const API_BLOCKED_FLAGS = new Set([
+  "--data", "-d",
+  "--Field", "-F", "--field", "-f",
+  "--header", "-H",
+  "--method", "-X",
+  "--output", "-o",
+]);
+
+// contents/** and raw/** accept any depth, so a `.` or `..` segment, plain or
+// percent-encoded, could resolve to an endpoint the allowlist never named.
+// Undecodable segments are rejected rather than guessed at, and so is a dot or
+// separator still encoded after one decode (%252e), which a second decode
+// anywhere downstream would resolve.
+const isPlainSegment = (segment) => {
+  try {
+    const decoded = decodeURIComponent(segment);
+    return !/^\.+$/.test(decoded) && !/[/\\]/.test(decoded) &&
+      !/%(2e|2f|5c)/i.test(decoded);
+  } catch {
+    return false;
+  }
+};
+
+// The URL parser cuts the path at `#`, so a fragment inside a wildcard
+// segment (repos/admin#/x/contents/y) would request a truncated endpoint the
+// allowlist never named.
+const isAllowedEndpoint = (endpoint) =>
+  !endpoint.includes("#") &&
+  matchesApiPath(endpoint, API_PATHS) &&
+  normalizeApiPath(endpoint).split("/").every(isPlainSegment);
+
+const runApi = (args) => {
+  const endpoint = args[1];
+  if (!endpoint || endpoint.startsWith("-") || !isAllowedEndpoint(endpoint))
+    return rejectApiEndpoint(endpoint, API_PATHS);
+  const rest = args.slice(2);
+  const rejected =
+    rejectFlags(args, BLOCKED_FLAGS) ??
+    rejectFlags(args, API_BLOCKED_FLAGS) ??
+    rejectRepoPath(rest);
+  if (rejected) return rejected;
+  // Inject --method GET immediately after the endpoint, before any
+  // user-supplied flags, so a `--` in user args cannot turn it positional.
+  return exec("tea", ["api", endpoint, "--method", "GET", ...rest]);
+};
+
 export const register = (server) =>
   server.tool(
     "tea",
-    "Run read-only Gitea/Forgejo CLI commands (--version, --help, branches list, comments list, issues [index]/list, labels list, logins list, milestones issues/list, pulls [index]/list/review-comments, releases list, repos list/search, whoami)",
+    "Run read-only Gitea/Forgejo CLI commands (--version, --help, branches list, comments list, issues [index]/list, labels list, logins list, milestones issues/list, pulls [index]/list/review-comments, releases list, repos list/search, whoami, api GET: pulls/reviews, commits/status+statuses, contents, raw, user)",
     ArgsSchema,
     async ({ args }) => {
       const isGlobal = args.length === 1 && GLOBAL_FLAGS.has(args[0]);
       if (isGlobal) return exec("tea", args);
+      if (args[0] === "api") return runApi(args);
 
       const resolved = resolve(args);
       if (!resolved || !ALLOWED.has(resolved.key))

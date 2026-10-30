@@ -136,6 +136,104 @@ describe.concurrent("tea tool (unit)", () => {
     });
   });
 
+  describe("api endpoint handling", () => {
+    it.for([
+      ["api", "repos/o/r/pulls/1/reviews"],
+      ["api", "repos/o/r/pulls/1/reviews/2/comments"],
+      ["api", "repos/o/r/commits/abc/status"],
+      ["api", "repos/o/r/commits/abc/statuses"],
+      ["api", "repos/o/r/contents"],
+      ["api", "repos/o/r/contents/README.md"],
+      ["api", "repos/o/r/contents/src/main.js"],
+      ["api", "repos/o/r/raw/README.md"],
+      ["api", "repos/o/r/raw/src/main.js"],
+      ["api", "repos/{owner}/{repo}/pulls/1/reviews"],
+      ["api", "/repos/o/r/contents/README.md"],
+      ["api", "repos/o/r/contents/README.md?ref=main"],
+      ["api", "repos/o/r/contents/my%20file.md"],
+      ["api", "user"],
+    ].map(args => ({ name: args[1], args })))(
+      "allows api $name", async ({ args }, { expect }) => {
+        assertAllowed(expect, await callMocked(args));
+      },
+    );
+
+    it("allows api endpoint with flags", async ({ expect }) => {
+      assertAllowed(expect, await callMocked([
+        "api", "repos/o/r/pulls/1/reviews", "-i", "-l", "work", "--repo", "o/r",
+      ]));
+    });
+
+    it("injects --method GET immediately after the endpoint", async ({ expect }) => {
+      const args = execArgs(await callMocked(["api", "repos/o/r/pulls/1/reviews", "--", "-i"]));
+      expect(args.slice(0, 4)).toEqual(["api", "repos/o/r/pulls/1/reviews", "--method", "GET"]);
+    });
+
+    it.for([
+      ["api"],
+      ["api", "-i", "user"],
+      ["api", "repos/o/r/pulls/1/merge"],
+      ["api", "repos/o/r/raw"],
+      ["api", "user/repos"],
+      ["api", "admin/users"],
+      ["api", "/api/v1/admin/users"],
+      ["api", "https://gitea.example.com/api/v1/user"],
+      ["api", "http://gitea.example.com/api/v1/user"],
+      // contents/** and raw/** take any depth, so a dot segment could climb
+      // out to an endpoint the allowlist never named.
+      ["api", "repos/o/r/contents/../../../../admin/users"],
+      ["api", "repos/o/r/raw/./../../../admin/users"],
+      ["api", "repos/o/r/contents/%2e%2e/%2E%2E/%2e%2e/%2e%2e/admin/users"],
+      ["api", "repos/o/r/contents/..%2f..%2f..%2f..%2fadmin/users"],
+      ["api", "repos/o/r/contents/..%5c..%5cadmin"],
+      ["api", "repos/o/r/contents/%zz"],
+      // Double-encoded, so one decode leaves a dot or separator still
+      // encoded for any later decode to resolve.
+      ["api", "repos/o/r/contents/%252e%252e/%252e%252e/%252e%252e/%252e%252e/admin/users"],
+      ["api", "repos/o/r/raw/..%252f..%252f..%252f..%252fadmin%252fusers"],
+      ["api", "repos/o/r/raw/..%255c..%255cadmin"],
+      // The URL parser cuts the path at `#`, so a fragment hidden in a
+      // wildcard segment would send the request to a truncated endpoint.
+      ["api", "repos/admin#/x/contents/y"],
+      ["api", "repos/o/r/contents/README.md#L1"],
+    ].map(args => ({ name: args.slice(1).join(" ") || "(bare)", args })))(
+      "blocks api $name", async ({ args }, { expect }) => {
+        expect((await callMocked(args)).isError).toBeTruthy();
+      },
+    );
+
+    it.for([
+      ["--method", "POST"],
+      ["--method=DELETE"],
+      ["-method", "POST"],
+      ["--meth", "POST"],
+      ["-X", "POST"],
+      ["-XPOST"],
+      ["-f", "body=text"],
+      ["-fbody=text"],
+      ["--field", "body=text"],
+      ["-field", "body=text"],
+      ["-F", "body=@file"],
+      ["--Field", "body=@file"],
+      ["-Field=body=@file"],
+      ["-H", "Accept: text/plain"],
+      ["--header", "X-Custom: val"],
+      ["-header", "X-Custom: val"],
+      ["-d", "@file.json"],
+      ["--data", "{}"],
+      ["-data={}"],
+      ["-o", "out.json"],
+      ["--output", "out.json"],
+      ["-output=out.json"],
+      ["--debug"],
+      ["--repo", "../other/repo"],
+    ].map(flags => ({ name: flags.join(" "), flags })))(
+      "blocks api flag $name", async ({ flags }, { expect }) => {
+        expect((await callMocked(["api", "repos/o/r/pulls/1/reviews", ...flags])).isError).toBeTruthy();
+      },
+    );
+  });
+
   describe("--repo", () => {
     it.for([
       ["pulls", "list", "--repo", "owner/name"],
