@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { execShell, fail } from "../lib/exec.mjs";
+import { execShell, fail } from "../lib/exec.ts";
 import { ArgsSchema } from "../lib/allowlist.mjs";
 
 const COMMANDS = new Set([

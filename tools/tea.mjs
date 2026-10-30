@@ -1,4 +1,4 @@
-import { exec, fail } from "../lib/exec.mjs";
+import { exec, fail } from "../lib/exec.ts";
 import {
   ArgsSchema, rejectSubcommand, rejectBlockedFlags,
   matchesApiPath, rejectApiEndpoint, normalizeApiPath,

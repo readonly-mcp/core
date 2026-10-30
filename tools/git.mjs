@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 import { z } from "zod";
-import { exec, fail } from "../lib/exec.mjs";
+import { exec, fail } from "../lib/exec.ts";
 import { ArgsSchema, rejectSubcommand, rejectBlockedFlags } from "../lib/allowlist.mjs";
 
 const SUBCOMMANDS = new Set([

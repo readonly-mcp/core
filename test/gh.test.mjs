@@ -2,7 +2,7 @@ import { describe, it, beforeAll, afterAll, vi } from "vitest";
 import { startServer, assertBlocked } from "./helpers.mjs";
 
 // --- Unit tests (mocked exec) ---
-vi.mock("../lib/exec.mjs", () => ({
+vi.mock("../lib/exec.ts", () => ({
   exec: async (_cmd, args) => ({
     content: [{ type: "text", text: JSON.stringify(args) }],
   }),

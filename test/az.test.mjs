@@ -7,7 +7,7 @@ import { startServer, assertBlocked, assertNotBlocked } from "./helpers.mjs";
 // The mock encodes received args in its response so each test can
 // inspect its own return value without shared mutable state.
 
-vi.mock("../lib/exec.mjs", () => ({
+vi.mock("../lib/exec.ts", () => ({
   execShell: async (_cmd, args) => ({
     content: [{ type: "text", text: JSON.stringify(args) }],
   }),

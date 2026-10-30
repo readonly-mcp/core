@@ -181,7 +181,7 @@ pnpm test
 index.mjs           Server entry point
 lib/
   allowlist.mjs     Allowlist matching and validation
-  exec.mjs          Sandboxed command execution
+  exec.ts           Sandboxed command execution
 tools/
   index.mjs         Tool registry
   acli.mjs          Atlassian CLI tool

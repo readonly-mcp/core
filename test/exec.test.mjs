@@ -1,5 +1,5 @@
 import { describe, it } from "vitest";
-import { text, fail, errorResult } from "../lib/exec.mjs";
+import { text, fail, errorResult } from "../lib/exec.ts";
 
 // exec() and execShell() are integration-tested through every tool test.
 // These unit tests cover the pure helper functions.
@@ -85,5 +85,18 @@ describe(errorResult, () => {
     const result = errorResult(err, "nonesuch", []);
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toBe("spawn nonesuch ENOENT");
+  });
+
+  it("reads the fields off a real Error instance", ({ expect }) => {
+    const err = Object.assign(new Error("spawn nonesuch ENOENT"), { code: "ENOENT", stdout: "", stderr: "" });
+    const result = errorResult(err, "nonesuch", []);
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toBe("spawn nonesuch ENOENT");
+  });
+
+  it("reports a thrown value that is not an execFile error", ({ expect }) => {
+    const result = errorResult("boom", "git", ["status"]);
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toBe("boom");
   });
 });
