@@ -1,25 +1,26 @@
-import { describe, it, beforeAll, afterAll, vi } from "vitest";
-import { connectTool, startServer, assertBlocked } from "./helpers.ts";
+import { describe, it, beforeAll, afterAll, vi, type ExpectStatic } from "vitest";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { connectTool, startServer, assertBlocked, textOf } from "./helpers.ts";
 
 // --- Unit tests (mocked exec) ---
 vi.mock("../lib/exec.ts", () => ({
-  exec: async (_cmd, args) => ({
+  exec: async (_cmd: string, args: readonly string[]) => ({
     content: [{ type: "text", text: JSON.stringify(args) }],
   }),
-  fail: (msg) => ({ content: [{ type: "text", text: msg }], isError: true }),
+  fail: (msg: string) => ({ content: [{ type: "text", text: msg }], isError: true }),
 }));
 
 const { register } = await import("../tools/tea.ts");
 
 const callTool = await connectTool(register);
 
-const callMocked = (args) => callTool({ args });
+const callMocked = (args: readonly string[]) => callTool({ args });
 
-const assertAllowed = (expect, result) => {
-  expect(result?.isError, `expected allowed, got: ${result?.content?.[0]?.text}`).toBeFalsy();
+const assertAllowed = (expect: ExpectStatic, result: CallToolResult) => {
+  expect(result.isError, `expected allowed, got: ${textOf(result)}`).toBeFalsy();
 };
 
-const execArgs = (result) => JSON.parse(result.content[0].text);
+const execArgs = (result: CallToolResult) => JSON.parse(textOf(result));
 
 describe.concurrent("tea tool (unit)", () => {
   describe("allowed subcommands", () => {
@@ -268,7 +269,7 @@ describe.concurrent("tea tool (unit)", () => {
 
 // --- Integration tests (real MCP server) ---
 describe.concurrent("tea tool (integration)", () => {
-  let server;
+  let server: ReturnType<typeof startServer>;
   beforeAll(async () => { server = startServer(); await server.initialize(); });
   afterAll(() => server.close());
 
