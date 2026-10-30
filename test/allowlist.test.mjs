@@ -3,7 +3,7 @@ import { z } from "zod";
 import {
   ArgsSchema, matchesAllowlist, rejectSubcommand, rejectBlockedFlags,
   matchesApiPath, rejectApiEndpoint,
-} from "../lib/allowlist.mjs";
+} from "../lib/allowlist.ts";
 
 describe("ArgsSchema coercion", () => {
   const schema = z.object(ArgsSchema);

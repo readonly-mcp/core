@@ -180,7 +180,7 @@ pnpm test
 ```
 index.mjs           Server entry point
 lib/
-  allowlist.mjs     Allowlist matching and validation
+  allowlist.ts      Allowlist matching and validation
   exec.ts           Sandboxed command execution
 tools/
   index.mjs         Tool registry

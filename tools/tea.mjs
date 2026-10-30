@@ -2,7 +2,7 @@ import { exec, fail } from "../lib/exec.ts";
 import {
   ArgsSchema, rejectSubcommand, rejectBlockedFlags,
   matchesApiPath, rejectApiEndpoint, normalizeApiPath,
-} from "../lib/allowlist.mjs";
+} from "../lib/allowlist.ts";
 
 const GLOBAL_FLAGS = new Set(["--help", "--version", "-h", "-v"]);
 

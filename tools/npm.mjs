@@ -1,5 +1,5 @@
 import { execShell } from "../lib/exec.ts";
-import { ArgsSchema, matchesAllowlist, rejectSubcommand, rejectBlockedFlags } from "../lib/allowlist.mjs";
+import { ArgsSchema, matchesAllowlist, rejectSubcommand, rejectBlockedFlags } from "../lib/allowlist.ts";
 
 const SUBCOMMANDS = new Set([
   "audit", "bin", "explain", "fund", "ls", "outdated", "root", "search", "view",

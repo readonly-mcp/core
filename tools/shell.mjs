@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { execShell, fail } from "../lib/exec.ts";
-import { ArgsSchema } from "../lib/allowlist.mjs";
+import { ArgsSchema } from "../lib/allowlist.ts";
 
 const COMMANDS = new Set([
   "basename", "date", "dirname", "eza", "file", "jq", "ls", "pwd",

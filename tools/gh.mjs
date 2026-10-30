@@ -3,7 +3,7 @@ import {
   ArgsSchema, matchesAllowlist, rejectSubcommand,
   rejectBlockedFlags, matchesApiPath, rejectApiEndpoint,
   normalizeApiPath,
-} from "../lib/allowlist.mjs";
+} from "../lib/allowlist.ts";
 
 const GLOBAL_FLAGS = new Set(["--version", "--help", "-h"]);
 

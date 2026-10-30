@@ -8,7 +8,7 @@ See `README.md` for the full security model and tool reference.
 ```
 index.mjs           Server entry point (security rationale in header comment)
 lib/
-  allowlist.mjs     Allowlist matching, flag blocking, JSON array coercion
+  allowlist.ts      Allowlist matching, flag blocking, JSON array coercion
   exec.ts           Sandboxed command execution (execFile, no shell)
 tools/
   index.mjs         Tool registry (barrel export)
@@ -38,7 +38,7 @@ These are non-negotiable. Every change must preserve them:
 1. Define a `SUBCOMMANDS` set of allowed subcommands
 1. Define `BLOCKED_FLAGS` for any flags that could mutate state, leak secrets,
    or enable SSRF
-1. Use `rejectSubcommand()` and `rejectBlockedFlags()` from `lib/allowlist.mjs`
+1. Use `rejectSubcommand()` and `rejectBlockedFlags()` from `lib/allowlist.ts`
 1. Use `exec()` from `lib/exec.ts` — never `child_process` directly
 1. Re-export from `tools/index.mjs`
 1. Add tests in `test/<name>.test.mjs` covering allowed commands, blocked

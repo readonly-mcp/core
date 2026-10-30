@@ -1,5 +1,5 @@
 import { exec } from "../lib/exec.ts";
-import { ArgsSchema, matchesAllowlist, rejectSubcommand } from "../lib/allowlist.mjs";
+import { ArgsSchema, matchesAllowlist, rejectSubcommand } from "../lib/allowlist.ts";
 
 const SUBCOMMANDS = new Set([
   "jira board list",
