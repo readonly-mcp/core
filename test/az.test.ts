@@ -1,5 +1,6 @@
-import { describe, it, beforeAll, afterAll, vi } from "vitest";
-import { connectTool, startServer, assertBlocked, assertNotBlocked } from "./helpers.ts";
+import { describe, it, beforeAll, afterAll, vi, type ExpectStatic } from "vitest";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { connectTool, startServer, assertBlocked, textOf } from "./helpers.ts";
 
 // --- Unit tests (mocked execShell) ---
 // Allowed paths hit the real `az` CLI which is slow (~1-2s per call),
@@ -8,20 +9,20 @@ import { connectTool, startServer, assertBlocked, assertNotBlocked } from "./hel
 // inspect its own return value without shared mutable state.
 
 vi.mock("../lib/exec.ts", () => ({
-  execShell: async (_cmd, args) => ({
+  execShell: async (_cmd: string, args: readonly string[]) => ({
     content: [{ type: "text", text: JSON.stringify(args) }],
   }),
-  fail: (msg) => ({ content: [{ type: "text", text: msg }], isError: true }),
+  fail: (msg: string) => ({ content: [{ type: "text", text: msg }], isError: true }),
 }));
 
 const { register } = await import("../tools/az.ts");
 
 const callTool = await connectTool(register);
 
-const callMocked = (args) => callTool({ args });
+const callMocked = (args: readonly string[]) => callTool({ args });
 
-const assertAllowed = (expect, result) => {
-  expect(result?.isError, `expected allowed, got: ${result?.content?.[0]?.text}`).toBeFalsy();
+const assertAllowed = (expect: ExpectStatic, result: CallToolResult) => {
+  expect(result.isError, `expected allowed, got: ${textOf(result)}`).toBeFalsy();
 };
 
 describe.concurrent("az tool (unit)", () => {
@@ -72,7 +73,7 @@ describe.concurrent("az tool (unit)", () => {
       const result = await callMocked(
         ["devops", "invoke", "--area", "build", "--resource", "builds"],
       );
-      const args = JSON.parse(result.content[0].text);
+      const args = JSON.parse(textOf(result));
       const methodIdx = args.indexOf("--http-method");
       expect(methodIdx, "should contain --http-method").not.toBe(-1);
       expect(args[methodIdx + 1]).toBe("GET");
@@ -83,11 +84,11 @@ describe.concurrent("az tool (unit)", () => {
 // --- Integration tests (real MCP server, blocked paths never reach execShell) ---
 
 describe.concurrent("az tool (integration)", () => {
-  let server;
+  let server: ReturnType<typeof startServer>;
   beforeAll(async () => { server = startServer(); await server.initialize(); });
   afterAll(() => server.close());
 
-  const call = (args) => server.callTool("az", { args });
+  const call = (args: readonly string[]) => server.callTool("az", { args });
 
   describe("blocked subcommands", () => {
     it.for(
@@ -203,19 +204,19 @@ describe.concurrent("az tool (integration)", () => {
     it("reports missing --area", async ({ expect }) => {
       const result = await call(["devops", "invoke", "--resource", "builds"]);
       expect(result?.isError).toBe(true);
-      expect(result.content[0].text).toContain("Missing required flag: --area");
+      expect(textOf(result)).toContain("Missing required flag: --area");
     });
 
     it("reports missing --resource", async ({ expect }) => {
       const result = await call(["devops", "invoke", "--area", "build"]);
       expect(result?.isError).toBe(true);
-      expect(result.content[0].text).toContain("Missing required flag: --resource");
+      expect(textOf(result)).toContain("Missing required flag: --resource");
     });
 
     it("reports missing --area when both absent", async ({ expect }) => {
       const result = await call(["devops", "invoke"]);
       expect(result?.isError).toBe(true);
-      expect(result.content[0].text).toContain("Missing required flag");
+      expect(textOf(result)).toContain("Missing required flag");
     });
   });
 
