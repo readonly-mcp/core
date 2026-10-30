@@ -12,7 +12,7 @@ lib/
   exec.ts           Sandboxed command execution (execFile, no shell)
 tools/
   index.ts          Tool registry (barrel export)
-  <tool>.mjs        One file per CLI tool (git, gh, az, npm, pnpm, chezmoi, acli, shell, tea)
+  <tool>.ts         One file per CLI tool (git, gh, az, npm, pnpm, chezmoi, acli, shell, tea)
 scripts/
   stage-package.mjs Stages the npm package in dist/source (`pnpm run build`)
 test/
@@ -33,7 +33,7 @@ These are non-negotiable. Every change must preserve them:
 
 ## Adding a New Tool
 
-1. Create `tools/<name>.mjs` — export a function that takes a `McpServer` and
+1. Create `tools/<name>.ts` — export a function that takes a `McpServer` and
    registers the tool via `server.tool()`
 1. Define a `SUBCOMMANDS` set of allowed subcommands
 1. Define `BLOCKED_FLAGS` for any flags that could mutate state, leak secrets,
@@ -42,7 +42,9 @@ These are non-negotiable. Every change must preserve them:
 1. Use `exec()` from `lib/exec.ts` — never `child_process` directly
 1. Re-export from `tools/index.ts`
 1. Add tests in `test/<name>.test.mjs` covering allowed commands, blocked
-   subcommands, blocked flags, and injection attempts
+   subcommands, blocked flags, and injection attempts. Write each `vi.mock`
+   path with the module's `.ts` specifier: vitest matches it exactly, and a
+   stale path silently leaves the real module in place.
 
 ## Adding Subcommands to an Existing Tool
 
