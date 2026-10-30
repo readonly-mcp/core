@@ -30,7 +30,7 @@ jobs:
 
       - run: npm publish
 
-name: Publish
+name: Release
 
 on:
   release:
