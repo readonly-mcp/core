@@ -1,0 +1,187 @@
+import { exec, fail } from "../lib/exec.mjs";
+import {
+  ArgsSchema, rejectSubcommand, rejectBlockedFlags,
+} from "../lib/allowlist.mjs";
+
+const GLOBAL_FLAGS = new Set(["--help", "--version", "-h", "-v"]);
+
+// Aliases from `tea <noun> --help` (tea 0.16.0). Only nouns and verbs with an
+// allowed command are listed: anything else stays unresolved and is rejected,
+// so a missing alias fails closed.
+const NOUN_ALIASES = {
+  branches: ["b", "branch"],
+  comments: ["c", "comment"],
+  issues: ["i", "issue"],
+  labels: ["label"],
+  logins: ["login"],
+  milestones: ["milestone", "ms"],
+  pulls: ["pr", "pull"],
+  releases: ["r", "release"],
+  repos: ["repo"],
+  whoami: [],
+};
+
+const VERB_ALIASES = {
+  branches: { list: ["ls"] },
+  comments: { list: ["ls"] },
+  issues: { list: ["ls"] },
+  labels: { list: ["ls"] },
+  logins: { list: ["ls"] },
+  milestones: { issues: ["i"], list: ["ls"] },
+  pulls: { list: ["ls"], "review-comments": ["rc"] },
+  releases: { list: ["ls"] },
+  repos: { list: ["ls"], search: ["s"] },
+  whoami: {},
+};
+
+const resolverOf = (aliases) => new Map(
+  Object.entries(aliases).flatMap(([name, alts]) =>
+    [name, ...alts].map((alias) => [alias, name])),
+);
+
+const NOUNS = resolverOf(NOUN_ALIASES);
+const VERBS = Object.fromEntries(
+  Object.entries(VERB_ALIASES).map(([noun, verbs]) => [noun, resolverOf(verbs)]),
+);
+
+// Commands whose children are all excluded, so the remaining args are free.
+const LEAVES = new Set([
+  "branches list",
+  "comments list",
+  "issues list",
+  "labels list",
+  "logins list",
+  "milestones list",
+  "pulls list", "pulls review-comments",
+  "releases list",
+  "repos list", "repos search",
+  "whoami",
+]);
+
+// Commands that act without a verb but also have children (`tea pulls 2`
+// views, `tea pulls merge 2` merges). tea dispatches to the first positional
+// naming a child, even after flags, so these accept only flags whose arity is
+// known and check every positional. Flags from `tea <command> --help`.
+const SHARED_VALUE_FLAGS = [
+  "f", "fields", "l", "limit", "lm", "login", "o", "output", "p", "page",
+  "R", "r", "remote", "repo", "state",
+];
+
+const BARE = {
+  issues: {
+    booleans: new Set(["comments", "h", "help"]),
+    positional: (arg) => /^\d+$/.test(arg),
+    values: new Set([
+      ...SHARED_VALUE_FLAGS,
+      "A", "a", "assignee", "author", "F", "from", "K", "k", "keyword", "kind",
+      "L", "labels", "M", "m", "mentions", "milestones", "org", "owner", "u", "until",
+    ]),
+  },
+  "milestones issues": {
+    booleans: new Set(["h", "help"]),
+    positional: (arg) => !["a", "add", "r", "remove"].includes(arg),
+    values: new Set([...SHARED_VALUE_FLAGS, "kind"]),
+  },
+  pulls: {
+    booleans: new Set(["comments", "h", "help"]),
+    positional: (arg) => /^\d+$/.test(arg),
+    values: new Set(SHARED_VALUE_FLAGS),
+  },
+};
+
+// tea (urfave/cli) treats `-name` and `--name` alike, so `-debug` must be
+// caught as `--debug`. Single-dash forms are lengthened for the prefix
+// matcher; single-letter flags already match as short flags.
+const toLongForm = (arg) => /^-[^-][^=]/.test(arg) ? "-" + arg : arg;
+
+const flagName = (arg) => arg.replace(/^--?/, "").split("=")[0];
+
+const isFlag = (arg) => arg.startsWith("-") && arg !== "-" && arg !== "--";
+
+// --debug / --vvv: may print the Authorization header, like gh --verbose.
+const BLOCKED_FLAGS = new Set(["--debug", "--vvv"]);
+
+// labels --save / -s: writes the label set to a file.
+const NOUN_BLOCKED_FLAGS = { labels: new Set(["--save", "-s"]) };
+
+const rejectFlags = (args, blocked) =>
+  rejectBlockedFlags(args, blocked) ??
+  rejectBlockedFlags(args.map(toLongForm), blocked);
+
+// --repo also accepts a local repository path, which would point tea at a
+// directory outside the server's working directory. Only `owner/name` slugs
+// pass; `.` and `..` segments are paths, not names.
+const isRepoSlug = (value) =>
+  /^[\w.-]+\/[\w.-]+$/.test(value) &&
+  value.split("/").every((segment) => !/^\.+$/.test(segment));
+
+const repoValues = (args) => args.flatMap((arg, i) => {
+  if (!isFlag(arg) || !["r", "repo"].includes(flagName(arg))) return [];
+  const eq = arg.indexOf("=");
+  return [eq === -1 ? args[i + 1] ?? "" : arg.slice(eq + 1)];
+});
+
+const rejectRepoPath = (args) => {
+  const path = repoValues(args).find((value) => !isRepoSlug(value));
+  return path === undefined ? null : fail(`--repo must be an owner/name slug, not a path: ${path}`);
+};
+
+// Walks the args after a bare command, consuming each flag's value by arity.
+// Unknown flags are rejected because their arity, and so whether the next arg
+// is a value or a positional, cannot be known.
+const rejectBareArgs = (args, { booleans, positional, values }) => {
+  const step = (i, positionals, endOfOptions) => {
+    if (i >= args.length) {
+      if (positionals.length > 1)
+        return fail(`At most one positional argument allowed, got: ${positionals.join(" ")}`);
+      const invalid = positionals.find((arg) => !positional(arg));
+      return invalid === undefined ? null : fail(`Positional argument not allowed: ${invalid}`);
+    }
+    const arg = args[i];
+    if (endOfOptions || !arg.startsWith("-") || arg === "-")
+      return step(i + 1, [...positionals, arg], endOfOptions);
+    if (arg === "--") return step(i + 1, positionals, true);
+    const name = flagName(arg);
+    if (booleans.has(name)) return step(i + 1, positionals, false);
+    if (values.has(name)) return step(i + (arg.includes("=") ? 1 : 2), positionals, false);
+    return fail(`Flag not allowed: ${arg}`);
+  };
+  return step(0, [], false);
+};
+
+const resolve = (args) => {
+  const noun = NOUNS.get(args[0]);
+  if (!noun) return null;
+  const verb = VERBS[noun].get(args[1]);
+  return verb
+    ? { command: [noun, verb], key: `${noun} ${verb}`, noun, rest: args.slice(2) }
+    : { command: [noun], key: noun, noun, rest: args.slice(1) };
+};
+
+const ALLOWED = new Set([...LEAVES, ...Object.keys(BARE)]);
+
+export const register = (server) =>
+  server.tool(
+    "tea",
+    "Run read-only Gitea/Forgejo CLI commands (--version, --help, branches list, comments list, issues [index]/list, labels list, logins list, milestones issues/list, pulls [index]/list/review-comments, releases list, repos list/search, whoami)",
+    ArgsSchema,
+    async ({ args }) => {
+      const isGlobal = args.length === 1 && GLOBAL_FLAGS.has(args[0]);
+      if (isGlobal) return exec("tea", args);
+
+      const resolved = resolve(args);
+      if (!resolved || !ALLOWED.has(resolved.key))
+        return rejectSubcommand(args, ALLOWED);
+      const { command, key, noun, rest } = resolved;
+
+      const rejected =
+        rejectFlags(args, BLOCKED_FLAGS) ??
+        (NOUN_BLOCKED_FLAGS[noun] && rejectFlags(args, NOUN_BLOCKED_FLAGS[noun])) ??
+        rejectRepoPath(rest) ??
+        (BARE[key] && rejectBareArgs(rest, BARE[key]));
+      if (rejected) return rejected;
+
+      // Run under canonical names so what executes is what was validated.
+      return exec("tea", [...command, ...rest]);
+    },
+  );

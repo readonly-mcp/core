@@ -34,6 +34,8 @@ The goal is to make auto-allow safe for read-only tools. Without enforcement at 
 | `git diff --no-index` | Reads arbitrary files outside the repo |
 | `git --output` / `diff -o` | Writes command output to a file |
 | `gh variable get` | Returns plaintext values that may contain internal URLs, hostnames, or quasi-sensitive configuration |
+| `tea logins helper` / `git-credential` | Git credential helper protocol answers with the token on stdout |
+| `tea notifications` | Not yet confirmed that listing leaves read state untouched |
 
 ## Tools
 
@@ -66,6 +68,21 @@ Additional restrictions:
 Read-only GitHub CLI commands: `attestation verify`, `cache list`, `gist list/view`, `issue list/status/view`, `label list`, `pr checks/diff/list/status/view`, `project field-list/item-list/list/view`, `release list/view`, `repo list/view`, `ruleset check/list/view`, `run list/view`, `search code/commits/issues/prs/repos`, `secret list`, `status`, `variable list`, `workflow list/view`
 
 Also supports `--version`, `--help`, `-h` as standalone flags.
+
+**Schema:** `{ args: string[] }`
+
+### `tea`
+
+Read-only Gitea and Forgejo CLI commands: `branches list`, `comments list`, `issues [index]/list`, `labels list`, `logins list`, `milestones issues/list`, `pulls [index]/list/review-comments`, `releases list`, `repos list/search`, `whoami`
+
+Also supports `--version`, `-v`, `--help`, `-h` as standalone flags. Noun and verb aliases (`pr`, `ms`, `ls`, …) are accepted and run under their canonical names.
+
+Additional restrictions:
+- Viewing by bare index (`pulls 2`, `issues 5`) accepts only known flags and a single numeric index, because tea dispatches to any positional naming a child command (`pulls --state all merge 2`)
+- `milestones issues` rejects its `add`/`remove` children, by name or alias, anywhere in the args
+- `--repo` accepts only an `owner/name` slug; local repository paths are rejected
+- `--debug`/`--vvv` blocked; `labels --save` blocked (writes a file)
+- `logins helper` (alias `git-credential`) excluded: it is a git credential helper that prints the token
 
 **Schema:** `{ args: string[] }`
 
@@ -171,5 +188,6 @@ tools/
   npm.mjs           npm tool
   pnpm.mjs          pnpm tool
   shell.mjs         Shell utilities tool
+  tea.mjs           Gitea/Forgejo CLI tool
 test/               Unit and integration tests (vitest)
 ```
