@@ -194,11 +194,14 @@ const API_BLOCKED_FLAGS = new Set([
 
 // contents/** and raw/** accept any depth, so a `.` or `..` segment, plain or
 // percent-encoded, could resolve to an endpoint the allowlist never named.
-// Undecodable segments are rejected rather than guessed at.
+// Undecodable segments are rejected rather than guessed at, and so is a dot or
+// separator still encoded after one decode (%252e), which a second decode
+// anywhere downstream would resolve.
 const isPlainSegment = (segment) => {
   try {
     const decoded = decodeURIComponent(segment);
-    return !/^\.+$/.test(decoded) && !/[/\\]/.test(decoded);
+    return !/^\.+$/.test(decoded) && !/[/\\]/.test(decoded) &&
+      !/%(2e|2f|5c)/i.test(decoded);
   } catch {
     return false;
   }

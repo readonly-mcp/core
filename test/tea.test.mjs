@@ -187,6 +187,11 @@ describe.concurrent("tea tool (unit)", () => {
       ["api", "repos/o/r/contents/..%2f..%2f..%2f..%2fadmin/users"],
       ["api", "repos/o/r/contents/..%5c..%5cadmin"],
       ["api", "repos/o/r/contents/%zz"],
+      // Double-encoded, so one decode leaves a dot or separator still
+      // encoded for any later decode to resolve.
+      ["api", "repos/o/r/contents/%252e%252e/%252e%252e/%252e%252e/%252e%252e/admin/users"],
+      ["api", "repos/o/r/raw/..%252f..%252f..%252f..%252fadmin%252fusers"],
+      ["api", "repos/o/r/raw/..%255c..%255cadmin"],
       // The URL parser cuts the path at `#`, so a fragment hidden in a
       // wildcard segment would send the request to a truncated endpoint.
       ["api", "repos/admin#/x/contents/y"],
