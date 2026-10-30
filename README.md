@@ -1,4 +1,4 @@
-# @readonly-mcp/core
+# @readonly-mcp/server
 
 A security-hardened [Model Context Protocol](https://modelcontextprotocol.io/) server that gives AI agents read-only access to CLI tools. Designed for auto-allow environments where the allowlist is the sole security boundary against prompt injection.
 

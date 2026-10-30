@@ -1,4 +1,4 @@
-# @readonly-mcp/core — Agent Guide
+# @readonly-mcp/server — Agent Guide
 
 Security-hardened MCP server providing read-only CLI access for AI agents.
 See `README.md` for the full security model and tool reference.
