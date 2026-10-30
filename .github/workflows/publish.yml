@@ -1,0 +1,40 @@
+# Stopgap until gtbuchanan/tooling's CLI is adopted; its reusable cd.yml
+# versions and publishes through changesets, which this repo does not use yet.
+jobs:
+  publish:
+    environment: release
+    name: Publish
+    permissions:
+      contents: read
+      id-token: write # npm trusted publishing (OIDC)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      # The release tag names the version being published; refuse a tag that
+      # disagrees with package.json rather than publish under the wrong one.
+      - env:
+          TAG: ${{ github.event.release.tag_name }}
+        name: Check tag matches package version
+        run: |
+          version="v$(node -p 'require("./package.json").version')"
+          if [ "$TAG" != "$version" ]; then
+            echo "::error::Release tag $TAG does not match package.json $version"
+            exit 1
+          fi
+
+      - run: npm publish
+
+name: Publish
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read

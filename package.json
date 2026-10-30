@@ -1,12 +1,23 @@
 {
   "name": "@readonly-mcp/server",
   "version": "1.0.0",
+  "description": "Security-hardened MCP server providing read-only CLI access for AI agents",
+  "homepage": "https://github.com/readonly-mcp/readonly-mcp",
+  "bugs": "https://github.com/readonly-mcp/readonly-mcp/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/readonly-mcp/readonly-mcp.git"
+  },
   "license": "MIT",
   "type": "module",
-  "private": true,
   "bin": {
     "readonly-mcp": "index.mjs"
   },
+  "files": [
+    "index.mjs",
+    "lib/",
+    "tools/"
+  ],
   "engines": {
     "node": ">=18",
     "pnpm": ">=10.16.0"
@@ -24,6 +35,9 @@
     "@types/node": "^24.19.2",
     "typescript": "^6.0.3",
     "vitest": "^4.1.6"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "packageManager": "pnpm@11.3.0"
 }

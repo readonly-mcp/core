@@ -131,7 +131,7 @@ Read-only Atlassian CLI commands: `jira board list`, `jira filter list`, `jira p
 ## Installation
 
 ```bash
-pnpm add -g github:readonly-mcp/core
+pnpm add -g @readonly-mcp/server
 ```
 
 ### Claude Code
