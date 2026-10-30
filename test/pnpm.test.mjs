@@ -9,7 +9,7 @@ vi.mock("../lib/exec.ts", () => ({
   fail: (msg) => ({ content: [{ type: "text", text: msg }], isError: true }),
 }));
 
-const { register } = await import("../tools/pnpm.mjs");
+const { register } = await import("../tools/pnpm.ts");
 
 let handler;
 register({ tool: (_, __, ___, fn) => { handler = fn; } });

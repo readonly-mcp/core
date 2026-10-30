@@ -1,3 +1,4 @@
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 // Uses execShell instead of exec for Windows compatibility: pnpm installed via
 // npm or corepack ships as a .cmd wrapper that execFile cannot invoke directly.
 // execShell is a no-op on non-Windows and wraps with bash on Windows.
@@ -14,13 +15,14 @@ const SUBCOMMANDS = new Set([
 // --registry: prevents SSRF / data exfiltration via attacker-controlled registries
 const BLOCKED_FLAGS = new Set(["--fix", "--registry"]);
 
-export const register = (server) =>
+export const register = (server: McpServer) =>
   server.tool(
     "pnpm",
     "Run read-only pnpm commands (--version, --help, audit, bin, licenses list, list, outdated, root, search, store status, why)",
     ArgsSchema,
     async ({ args }) => {
-      const isGlobal = args.length === 1 && GLOBAL_FLAGS.has(args[0]);
+      const [only, ...rest] = args;
+      const isGlobal = only !== undefined && rest.length === 0 && GLOBAL_FLAGS.has(only);
       if (!isGlobal && !matchesAllowlist(args, SUBCOMMANDS))
         return rejectSubcommand(args, SUBCOMMANDS);
       const rejected = rejectBlockedFlags(args, BLOCKED_FLAGS);
