@@ -1,0 +1,28 @@
+# Stopgap until gtbuchanan/tooling's CLI is adopted; its reusable ci.yml
+# drives gtb/turbo tasks this repo does not define yet.
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          cache: pnpm
+          node-version: 24
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm test
+
+name: PR
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
