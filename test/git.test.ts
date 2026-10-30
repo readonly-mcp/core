@@ -1,38 +1,39 @@
 import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { describe, it, beforeAll, afterAll, vi } from "vitest";
-import { connectTool, startServer, assertBlocked, assertNotBlocked } from "./helpers.ts";
+import { describe, it, beforeAll, afterAll, vi, type ExpectStatic } from "vitest";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { connectTool, startServer, assertBlocked, assertNotBlocked, textOf } from "./helpers.ts";
 
 // --- Unit tests (mocked exec) ---
 vi.mock("../lib/exec.ts", () => ({
-  exec: async (_cmd, args) => ({
+  exec: async (_cmd: string, args: readonly string[]) => ({
     content: [{ type: "text", text: JSON.stringify({ cmd: _cmd, args }) }],
   }),
-  fail: (msg) => ({ content: [{ type: "text", text: msg }], isError: true }),
+  fail: (msg: string) => ({ content: [{ type: "text", text: msg }], isError: true }),
 }));
 
 const { register } = await import("../tools/git.ts");
 
 const callTool = await connectTool(register);
 
-const callMocked = (args, cwd) => callTool({ args, cwd });
+const callMocked = (args: readonly string[], cwd?: string) => callTool({ args, cwd });
 
-const assertAllowed = (expect, result) => {
-  expect(result?.isError, `expected allowed, got: ${result?.content?.[0]?.text}`).toBeFalsy();
+const assertAllowed = (expect: ExpectStatic, result: CallToolResult) => {
+  expect(result.isError, `expected allowed, got: ${textOf(result)}`).toBeFalsy();
 };
 
 describe.concurrent("git tool (unit)", () => {
   describe("--no-pager injection", () => {
     it("injects --no-pager as first arg", async ({ expect }) => {
       const result = await callMocked(["log", "--oneline", "-1"]);
-      const { args } = JSON.parse(result.content[0].text);
+      const { args } = JSON.parse(textOf(result));
       expect(args[0]).toBe("--no-pager");
     });
 
     it("preserves original args after --no-pager", async ({ expect }) => {
       const result = await callMocked(["status"]);
-      const { args } = JSON.parse(result.content[0].text);
+      const { args } = JSON.parse(textOf(result));
       expect(args).toEqual(["--no-pager", "status"]);
     });
   });
@@ -73,12 +74,12 @@ describe.concurrent("git tool (unit)", () => {
     it("rejects cwd that is not a known worktree", async ({ expect }) => {
       const result = await callMocked(["status"], "/tmp/not-a-worktree");
       expect(result?.isError).toBe(true);
-      expect(result.content[0].text).toContain("cwd rejected");
+      expect(textOf(result)).toContain("cwd rejected");
     });
 
     it("prepends -C for valid worktree cwd", async ({ expect }) => {
       const result = await callMocked(["status"], toplevel);
-      const { args } = JSON.parse(result.content[0].text);
+      const { args } = JSON.parse(textOf(result));
       expect(args[0]).toBe("--no-pager");
       expect(args[1]).toBe("-C");
       expect(args[2]).toBe(toplevel);
@@ -87,37 +88,37 @@ describe.concurrent("git tool (unit)", () => {
 
     it("omits -C when cwd is not provided", async ({ expect }) => {
       const result = await callMocked(["status"]);
-      const { args } = JSON.parse(result.content[0].text);
+      const { args } = JSON.parse(textOf(result));
       expect(args).toEqual(["--no-pager", "status"]);
     });
 
     it("rejects path traversal from valid worktree", async ({ expect }) => {
       const result = await callMocked(["status"], toplevel + "/../../../tmp");
       expect(result?.isError).toBe(true);
-      expect(result.content[0].text).toContain("cwd rejected");
+      expect(textOf(result)).toContain("cwd rejected");
     });
 
     it("accepts trailing slash (resolve normalizes it)", async ({ expect }) => {
       const result = await callMocked(["status"], toplevel + "/");
-      const { args } = JSON.parse(result.content[0].text);
+      const { args } = JSON.parse(textOf(result));
       expect(args[1]).toBe("-C");
     });
 
     it("rejects an empty cwd at the input schema", async ({ expect }) => {
       const result = await callMocked(["status"], "");
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toMatch(/Input validation error[\s\S]*"cwd"/);
+      expect(textOf(result)).toMatch(/Input validation error[\s\S]*"cwd"/);
     });
 
     it.runIf(process.platform === "win32")(
       "accepts case-variant cwd on Windows",
       async ({ expect }) => {
+        const first = toplevel.charAt(0);
         const swapped =
-          toplevel[0] === toplevel[0].toUpperCase()
-            ? toplevel[0].toLowerCase() + toplevel.slice(1)
-            : toplevel[0].toUpperCase() + toplevel.slice(1);
+          (first === first.toUpperCase() ? first.toLowerCase() : first.toUpperCase()) +
+          toplevel.slice(1);
         const result = await callMocked(["status"], swapped);
-        const { args } = JSON.parse(result.content[0].text);
+        const { args } = JSON.parse(textOf(result));
         expect(args[1]).toBe("-C");
       },
     );
@@ -126,7 +127,7 @@ describe.concurrent("git tool (unit)", () => {
       "accepts forward-slash cwd on Windows",
       async ({ expect }) => {
         const result = await callMocked(["status"], toplevel.replace(/\\/g, "/"));
-        const { args } = JSON.parse(result.content[0].text);
+        const { args } = JSON.parse(textOf(result));
         expect(args[1]).toBe("-C");
       },
     );
@@ -135,7 +136,7 @@ describe.concurrent("git tool (unit)", () => {
 
 // --- Integration tests (real MCP server) ---
 describe.concurrent("git tool (integration)", () => {
-  let server;
+  let server: ReturnType<typeof startServer>;
   beforeAll(async () => { server = startServer(); await server.initialize(); });
   afterAll(() => server.close());
 
@@ -405,7 +406,7 @@ describe.concurrent("git tool (integration)", () => {
 
     it("accepts cwd that is the main worktree", async ({ expect }) => {
       const topResult = await server.callTool("git", { args: ["rev-parse", "--show-toplevel"] });
-      const toplevel = topResult?.content?.[0]?.text?.trim();
+      const toplevel = textOf(topResult).trim();
       assertNotBlocked(expect, await server.callTool("git", { args: ["status"], cwd: toplevel }));
     });
 
@@ -415,13 +416,13 @@ describe.concurrent("git tool (integration)", () => {
 
     it("rejects path traversal from valid worktree", async ({ expect }) => {
       const topResult = await server.callTool("git", { args: ["rev-parse", "--show-toplevel"] });
-      const toplevel = topResult?.content?.[0]?.text?.trim();
+      const toplevel = textOf(topResult).trim();
       assertBlocked(expect, await server.callTool("git", { args: ["status"], cwd: toplevel + "/../../../tmp" }));
     });
 
     it("accepts cwd with trailing slash", async ({ expect }) => {
       const topResult = await server.callTool("git", { args: ["rev-parse", "--show-toplevel"] });
-      const toplevel = topResult?.content?.[0]?.text?.trim();
+      const toplevel = textOf(topResult).trim();
       assertNotBlocked(expect, await server.callTool("git", { args: ["status"], cwd: toplevel + "/" }));
     });
   });
@@ -447,7 +448,7 @@ describe.concurrent("git tool (integration)", () => {
 
     it("resolves HEAD from linked worktree, not main", async ({ expect }) => {
       const result = await server.callTool("git", { args: ["rev-parse", "--abbrev-ref", "HEAD"], cwd: worktreePath });
-      const branch = result?.content?.[0]?.text?.trim();
+      const branch = textOf(result).trim();
       expect(branch).toBe(branchName);
     });
   });
