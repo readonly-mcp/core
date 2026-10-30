@@ -1,5 +1,5 @@
 import { describe, it, beforeAll, afterAll, vi } from "vitest";
-import { startServer, assertBlocked, assertNotBlocked } from "./helpers.ts";
+import { connectTool, startServer, assertBlocked, assertNotBlocked } from "./helpers.ts";
 
 // --- Unit tests (mocked execShell) ---
 vi.mock("../lib/exec.ts", () => ({
@@ -11,10 +11,9 @@ vi.mock("../lib/exec.ts", () => ({
 
 const { register } = await import("../tools/pnpm.ts");
 
-let handler;
-register({ tool: (_, __, ___, fn) => { handler = fn; } });
+const callTool = await connectTool(register);
 
-const callMocked = (args) => handler({ args });
+const callMocked = (args) => callTool({ args });
 
 const assertAllowed = (expect, result) => {
   expect(result?.isError, `expected allowed, got: ${result?.content?.[0]?.text}`).toBeFalsy();

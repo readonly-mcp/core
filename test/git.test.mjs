@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, it, beforeAll, afterAll, vi } from "vitest";
-import { startServer, assertBlocked, assertNotBlocked } from "./helpers.ts";
+import { connectTool, startServer, assertBlocked, assertNotBlocked } from "./helpers.ts";
 
 // --- Unit tests (mocked exec) ---
 vi.mock("../lib/exec.ts", () => ({
@@ -14,10 +14,9 @@ vi.mock("../lib/exec.ts", () => ({
 
 const { register } = await import("../tools/git.ts");
 
-let handler;
-register({ tool: (_, __, ___, fn) => { handler = fn; } });
+const callTool = await connectTool(register);
 
-const callMocked = (args, cwd) => handler({ args, cwd });
+const callMocked = (args, cwd) => callTool({ args, cwd });
 
 const assertAllowed = (expect, result) => {
   expect(result?.isError, `expected allowed, got: ${result?.content?.[0]?.text}`).toBeFalsy();
@@ -104,11 +103,10 @@ describe.concurrent("git tool (unit)", () => {
       expect(args[1]).toBe("-C");
     });
 
-    it("treats empty string cwd as absent (no -C injected)", async ({ expect }) => {
-      // Zod .min(1) rejects "" at the schema layer; handler-level falsy check is backup
+    it("rejects an empty cwd at the input schema", async ({ expect }) => {
       const result = await callMocked(["status"], "");
-      const { args } = JSON.parse(result.content[0].text);
-      expect(args).toEqual(["--no-pager", "status"]);
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toMatch(/Input validation error[\s\S]*"cwd"/);
     });
 
     it.runIf(process.platform === "win32")(

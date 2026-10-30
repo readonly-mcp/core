@@ -1,5 +1,5 @@
 import { describe, it, beforeAll, afterAll, vi } from "vitest";
-import { startServer, assertBlocked, assertNotBlocked } from "./helpers.ts";
+import { connectTool, startServer, assertBlocked, assertNotBlocked } from "./helpers.ts";
 
 // --- Unit tests (mocked execShell) ---
 // Allowed paths hit the real `az` CLI which is slow (~1-2s per call),
@@ -16,10 +16,9 @@ vi.mock("../lib/exec.ts", () => ({
 
 const { register } = await import("../tools/az.ts");
 
-let handler;
-register({ tool: (_, __, ___, fn) => { handler = fn; } });
+const callTool = await connectTool(register);
 
-const callMocked = (args) => handler({ args });
+const callMocked = (args) => callTool({ args });
 
 const assertAllowed = (expect, result) => {
   expect(result?.isError, `expected allowed, got: ${result?.content?.[0]?.text}`).toBeFalsy();

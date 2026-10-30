@@ -4,6 +4,9 @@
  * Spawns the MCP server as a child process and communicates over JSON-RPC/stdio.
  */
 
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { CallToolResultSchema, type CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { spawn } from "node:child_process";
 import { dirname, join } from "node:path";
@@ -84,6 +87,25 @@ export const startServer = () => {
   };
 
   return { initialize, callTool, close };
+};
+
+/**
+ * Registers one tool on a real McpServer and connects a client to it in
+ * memory, so unit tests reach the handler the way production does: through
+ * the protocol and the tool's input schema.
+ */
+export const connectTool = async (register: (server: McpServer) => unknown) => {
+  const server = new McpServer({ name: "test", version: "0.0.0" });
+  register(server);
+  const client = new Client({ name: "test", version: "0.0.0" });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+  const { tools } = await client.listTools();
+  const [tool, ...others] = tools;
+  if (tool === undefined || others.length > 0)
+    throw new Error(`Expected one registered tool, got: ${tools.map((t) => t.name).join(", ")}`);
+  return async (args: Record<string, unknown>): Promise<CallToolResult> =>
+    CallToolResultSchema.parse(await client.callTool({ name: tool.name, arguments: args }));
 };
 
 /** The text of a result's first content item, which must be text. */
