@@ -5,9 +5,9 @@ import { join } from "node:path";
 import { startServer, assertBlocked, assertNotBlocked } from "./helpers.ts";
 
 describe.concurrent("jq file argument blocking", () => {
-  let server;
-  let tmpDir;
-  let canaryFile;
+  let server: ReturnType<typeof startServer>;
+  let tmpDir: string;
+  let canaryFile: string;
 
   beforeAll(async () => {
     server = startServer();
