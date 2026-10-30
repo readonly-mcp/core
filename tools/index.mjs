@@ -5,5 +5,5 @@ export { register as gh } from "./gh.mjs";
 export { register as git } from "./git.mjs";
 export { register as npm } from "./npm.ts";
 export { register as pnpm } from "./pnpm.ts";
-export { register as shell } from "./shell.mjs";
+export { register as shell } from "./shell.ts";
 export { register as tea } from "./tea.mjs";

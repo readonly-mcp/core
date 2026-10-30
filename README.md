@@ -191,7 +191,7 @@ tools/
   git.mjs           Git tool
   npm.ts            npm tool
   pnpm.ts           pnpm tool
-  shell.mjs         Shell utilities tool
+  shell.ts          Shell utilities tool
   tea.mjs           Gitea/Forgejo CLI tool
 test/               Unit and integration tests (vitest)
 ```

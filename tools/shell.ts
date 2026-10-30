@@ -1,3 +1,5 @@
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { execShell, fail } from "../lib/exec.ts";
 import { ArgsSchema } from "../lib/allowlist.ts";
@@ -22,8 +24,8 @@ const JQ_VALUE_FLAGS = new Set(["--indent"]);
 // Single characters corresponding to file-reading short flags (-f, -L)
 const JQ_FILE_CHARS = "fL";
 
-const rejectFileFlag = (arg) => {
-  const base = arg.split("=")[0];
+const rejectFileFlag = (arg: string): CallToolResult | null => {
+  const base = arg.split("=")[0] ?? arg;
   if (JQ_FILE_FLAGS.has(base)) return fail(`Flag not allowed for jq: ${base}`);
   if (arg.startsWith("-") && !arg.startsWith("--")) {
     const ch = [...arg.slice(1)].find((c) => JQ_FILE_CHARS.includes(c));
@@ -35,28 +37,34 @@ const rejectFileFlag = (arg) => {
 // Two-phase scan: walks flags before the filter expression (skipping flag-value
 // pairs like --arg k v), then blocks any non-flag positional after the filter
 // as a file path.
-const validateJqArgs = (args) => {
+const validateJqArgs = (args: readonly string[]): CallToolResult | null => {
+  // The index skips flag values, so these stay counted loops. Each binds its
+  // element once; the undefined check never fires within the length bound.
   for (let i = 0; i < args.length; i++) {
-    const blocked = rejectFileFlag(args[i]);
+    const arg = args[i];
+    if (arg === undefined) break;
+    const blocked = rejectFileFlag(arg);
     if (blocked) return blocked;
-    if (JQ_PAIR_FLAGS.has(args[i])) { i += 2; continue; }
-    if (JQ_VALUE_FLAGS.has(args[i])) { i++; continue; }
-    if (args[i].startsWith("-")) continue;
+    if (JQ_PAIR_FLAGS.has(arg)) { i += 2; continue; }
+    if (JQ_VALUE_FLAGS.has(arg)) { i++; continue; }
+    if (arg.startsWith("-")) continue;
     // First non-flag arg is the filter expression; rest are file paths
     for (let j = i + 1; j < args.length; j++) {
-      const jblocked = rejectFileFlag(args[j]);
+      const rest = args[j];
+      if (rest === undefined) break;
+      const jblocked = rejectFileFlag(rest);
       if (jblocked) return jblocked;
-      if (JQ_PAIR_FLAGS.has(args[j])) { j += 2; continue; }
-      if (JQ_VALUE_FLAGS.has(args[j])) { j++; continue; }
-      if (args[j].startsWith("-")) continue;
-      return fail(`File arguments not allowed for jq (use stdin via piping). Got: ${args[j]}`);
+      if (JQ_PAIR_FLAGS.has(rest)) { j += 2; continue; }
+      if (JQ_VALUE_FLAGS.has(rest)) { j++; continue; }
+      if (rest.startsWith("-")) continue;
+      return fail(`File arguments not allowed for jq (use stdin via piping). Got: ${rest}`);
     }
     break;
   }
   return null;
 };
 
-export const register = (server) =>
+export const register = (server: McpServer) =>
   server.tool(
     "shell",
     "Run read-only shell utilities (basename, date, dirname, eza, file, jq, ls, pwd, readlink, realpath, stat, wc, which, whoami)",
