@@ -86,10 +86,16 @@ export const startServer = () => {
   return { initialize, callTool, close };
 };
 
-export const assertBlocked = (expect: ExpectStatic, result: CallToolResult, message?: string) => {
+/** The text of a result's first content item, which must be text. */
+export const textOf = (result: CallToolResult): string => {
   const first = result.content[0];
-  const txt = first?.type === "text" ? first.text : "";
-  expect(result.isError || txt.includes("not allowed"), message).toBe(true);
+  if (first?.type !== "text")
+    throw new Error(`Expected a text content item, got: ${JSON.stringify(result.content)}`);
+  return first.text;
+};
+
+export const assertBlocked = (expect: ExpectStatic, result: CallToolResult, message?: string) => {
+  expect(result.isError || textOf(result).includes("not allowed"), message).toBe(true);
 };
 
 export const assertNotBlocked = (expect: ExpectStatic, result: CallToolResult, message?: string) => {
