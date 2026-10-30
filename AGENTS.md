@@ -11,7 +11,7 @@ lib/
   allowlist.ts      Allowlist matching, flag blocking, JSON array coercion
   exec.ts           Sandboxed command execution (execFile, no shell)
 tools/
-  index.mjs         Tool registry (barrel export)
+  index.ts          Tool registry (barrel export)
   <tool>.mjs        One file per CLI tool (git, gh, az, npm, pnpm, chezmoi, acli, shell, tea)
 scripts/
   stage-package.mjs Stages the npm package in dist/source (`pnpm run build`)
@@ -40,7 +40,7 @@ These are non-negotiable. Every change must preserve them:
    or enable SSRF
 1. Use `rejectSubcommand()` and `rejectBlockedFlags()` from `lib/allowlist.ts`
 1. Use `exec()` from `lib/exec.ts` — never `child_process` directly
-1. Re-export from `tools/index.mjs`
+1. Re-export from `tools/index.ts`
 1. Add tests in `test/<name>.test.mjs` covering allowed commands, blocked
    subcommands, blocked flags, and injection attempts
 

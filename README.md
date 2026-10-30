@@ -183,7 +183,7 @@ lib/
   allowlist.ts      Allowlist matching and validation
   exec.ts           Sandboxed command execution
 tools/
-  index.mjs         Tool registry
+  index.ts          Tool registry
   acli.ts           Atlassian CLI tool
   az.ts             Azure DevOps CLI tool
   chezmoi.ts        Chezmoi tool

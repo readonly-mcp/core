@@ -120,7 +120,7 @@
 import { createRequire } from "node:module";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import * as tools from "./tools/index.mjs";
+import * as tools from "./tools/index.ts";
 
 const require = createRequire(import.meta.url);
 const { version } = require("./package.json");
