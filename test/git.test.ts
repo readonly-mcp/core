@@ -1,8 +1,8 @@
 import { execFileSync } from 'node:child_process';
-import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { type ExpectStatic, afterAll, beforeAll, describe, it, vi } from 'vitest';
+import { join } from 'node:path';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { type ExpectStatic, afterAll, beforeAll, describe, it, vi } from 'vitest';
 import * as build from './builders.ts';
 import { assertBlocked, assertNotBlocked, connectTool, echoed, startServer, textOf } from './helpers.ts';
 

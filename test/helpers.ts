@@ -4,14 +4,14 @@
  * Spawns the MCP server as a child process and communicates over JSON-RPC/stdio.
  */
 
+import { spawn } from 'node:child_process';
+import { dirname, join } from 'node:path';
+import { createInterface } from 'node:readline';
+import { fileURLToPath } from 'node:url';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { type CallToolResult, CallToolResultSchema } from '@modelcontextprotocol/sdk/types.js';
-import { spawn } from 'node:child_process';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { createInterface } from 'node:readline';
 import type { ExpectStatic } from 'vitest';
 import { z } from 'zod';
 import type * as ExecModule from '../lib/exec.ts';

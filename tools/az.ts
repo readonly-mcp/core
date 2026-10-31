@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { execShell, fail } from '../lib/exec.ts';
 import { ArgsSchema, matchesAllowlist, rejectSubcommand } from '../lib/allowlist.ts';
+import { execShell, fail } from '../lib/exec.ts';
 
 const SUBCOMMANDS = new Set([
   // devops

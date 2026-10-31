@@ -1,6 +1,6 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { exec } from '../lib/exec.ts';
 import { ArgsSchema, matchesAllowlist, rejectSubcommand } from '../lib/allowlist.ts';
+import { exec } from '../lib/exec.ts';
 
 const SUBCOMMANDS = new Set([
   'diff', 'doctor', 'managed',

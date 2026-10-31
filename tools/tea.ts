@@ -1,10 +1,10 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { exec, fail } from '../lib/exec.ts';
 import {
   ArgsSchema, matchesApiPath, normalizeApiPath,
   rejectApiEndpoint, rejectBlockedFlags, rejectSubcommand,
 } from '../lib/allowlist.ts';
+import { exec, fail } from '../lib/exec.ts';
 
 const GLOBAL_FLAGS = new Set(['--help', '--version', '-h', '-v']);
 

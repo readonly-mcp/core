@@ -1,9 +1,9 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { exec, fail } from '../lib/exec.ts';
 import { ArgsSchema, rejectBlockedFlags, rejectSubcommand } from '../lib/allowlist.ts';
+import { exec, fail } from '../lib/exec.ts';
 
 const SUBCOMMANDS = new Set([
   'blame', 'branch', 'describe', 'diff', 'log', 'ls-files', 'ls-tree',

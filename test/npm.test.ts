@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
-import { type ExpectStatic, describe, it, vi } from 'vitest';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { type ExpectStatic, describe, it, vi } from 'vitest';
 import * as build from './builders.ts';
 import { assertBlocked, assertNotBlocked, connectTool, echoed, textOf } from './helpers.ts';
 import { itWithPackageServer, packageServerTimeout } from './package-fixture.ts';

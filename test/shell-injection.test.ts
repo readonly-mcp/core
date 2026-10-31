@@ -1,7 +1,7 @@
-import { type ExpectStatic, afterAll, beforeAll, describe, it } from 'vitest';
-import { tmpdir } from 'node:os';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { type ExpectStatic, afterAll, beforeAll, describe, it } from 'vitest';
 import { assertBlocked, startServer } from './helpers.ts';
 
 describe.concurrent('shell injection', () => {

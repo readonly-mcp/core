@@ -1,8 +1,8 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
-import { execShell, fail } from '../lib/exec.ts';
 import { ArgsSchema } from '../lib/allowlist.ts';
+import { execShell, fail } from '../lib/exec.ts';
 
 const COMMANDS = new Set([
   'basename', 'date', 'dirname', 'eza', 'file', 'jq', 'ls', 'pwd',
