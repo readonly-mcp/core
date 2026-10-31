@@ -1,5 +1,6 @@
 allowBuilds:
   esbuild: true
+  unrs-resolver: false
 
 # 4320 minutes = 3 days, matching the shared Renovate preset's quarantine.
 minimumReleaseAge: 4320

@@ -25,6 +25,7 @@
   "scripts": {
     "build": "pnpm run compile:ts && node scripts/stage-package.ts",
     "compile:ts": "tsc -p tsconfig.build.json",
+    "lint:eslint": "eslint",
     "test": "vitest run",
     "typecheck:ts": "tsc"
   },
@@ -34,8 +35,11 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^10.6.0",
+    "@gtbuchanan/eslint-config": "^0.5.2",
     "@gtbuchanan/tsconfig": "^0.2.0",
     "@types/node": "^24.19.2",
+    "eslint": "^10.13.0",
+    "jiti": "^2.7.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.6"
   },
