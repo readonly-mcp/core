@@ -1,10 +1,10 @@
 import { faker } from '@faker-js/faker';
-import { describe, it, beforeAll, afterAll } from 'vitest';
+import { afterAll, beforeAll, describe, it } from 'vitest';
 import { tmpdir } from 'node:os';
-import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import * as build from './builders.ts';
-import { startServer, assertBlocked, assertNotBlocked } from './helpers.ts';
+import { assertBlocked, assertNotBlocked, startServer } from './helpers.ts';
 
 describe.concurrent('jq file argument blocking', () => {
   let server: ReturnType<typeof startServer>;

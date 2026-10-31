@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { z } from 'zod';
 import { exec, fail } from '../lib/exec.ts';
-import { ArgsSchema, rejectSubcommand, rejectBlockedFlags } from '../lib/allowlist.ts';
+import { ArgsSchema, rejectBlockedFlags, rejectSubcommand } from '../lib/allowlist.ts';
 
 const SUBCOMMANDS = new Set([
   'blame', 'branch', 'describe', 'diff', 'log', 'ls-files', 'ls-tree',

@@ -1,8 +1,8 @@
 import { faker } from '@faker-js/faker';
-import { describe, it, beforeAll, afterAll, vi, type ExpectStatic } from 'vitest';
+import { type ExpectStatic, afterAll, beforeAll, describe, it, vi } from 'vitest';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import * as build from './builders.ts';
-import { connectTool, startServer, assertBlocked, textOf, echoed } from './helpers.ts';
+import { assertBlocked, connectTool, echoed, startServer, textOf } from './helpers.ts';
 
 // --- Unit tests (mocked exec) ---
 vi.mock('../lib/exec.ts', async importOriginal =>

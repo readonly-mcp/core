@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { describe, it } from 'vitest';
-import { MAX_BUFFER, text, fail, errorResult } from '../lib/exec.ts';
+import { MAX_BUFFER, errorResult, fail, text } from '../lib/exec.ts';
 import * as build from './builders.ts';
 import { textOf } from './helpers.ts';
 

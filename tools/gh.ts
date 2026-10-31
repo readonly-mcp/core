@@ -1,9 +1,9 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { exec } from '../lib/exec.ts';
 import {
-  ArgsSchema, matchesAllowlist, rejectSubcommand,
-  rejectBlockedFlags, matchesApiPath, rejectApiEndpoint,
-  normalizeApiPath,
+  ArgsSchema, matchesAllowlist, matchesApiPath,
+  normalizeApiPath, rejectApiEndpoint, rejectBlockedFlags,
+  rejectSubcommand,
 } from '../lib/allowlist.ts';
 
 const GLOBAL_FLAGS = new Set(['--version', '--help', '-h']);

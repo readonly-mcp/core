@@ -3,7 +3,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 // npm or corepack ships as a .cmd wrapper that execFile cannot invoke directly.
 // execShell is a no-op on non-Windows and wraps with bash on Windows.
 import { execShell } from '../lib/exec.ts';
-import { ArgsSchema, matchesAllowlist, rejectSubcommand, rejectBlockedFlags } from '../lib/allowlist.ts';
+import { ArgsSchema, matchesAllowlist, rejectBlockedFlags, rejectSubcommand } from '../lib/allowlist.ts';
 
 const GLOBAL_FLAGS = new Set(['--version', '--help', '-h']);
 

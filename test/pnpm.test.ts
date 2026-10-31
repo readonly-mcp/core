@@ -1,7 +1,7 @@
-import { describe, it, vi, type ExpectStatic } from 'vitest';
+import { type ExpectStatic, describe, it, vi } from 'vitest';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import * as build from './builders.ts';
-import { connectTool, assertBlocked, assertNotBlocked, textOf } from './helpers.ts';
+import { assertBlocked, assertNotBlocked, connectTool, textOf } from './helpers.ts';
 import { itWithPackageServer, packageServerTimeout } from './package-fixture.ts';
 
 // --- Unit tests (mocked execShell) ---

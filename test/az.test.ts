@@ -1,7 +1,7 @@
-import { describe, it, beforeAll, afterAll, vi, type ExpectStatic } from 'vitest';
+import { type ExpectStatic, afterAll, beforeAll, describe, it, vi } from 'vitest';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import * as build from './builders.ts';
-import { connectTool, startServer, assertBlocked, textOf, echoed } from './helpers.ts';
+import { assertBlocked, connectTool, echoed, startServer, textOf } from './helpers.ts';
 
 // --- Unit tests (mocked execShell) ---
 // Allowed paths hit the real `az` CLI which is slow (~1-2s per call),

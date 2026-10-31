@@ -1,10 +1,10 @@
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { describe, it, beforeAll, afterAll, vi, type ExpectStatic } from 'vitest';
+import { type ExpectStatic, afterAll, beforeAll, describe, it, vi } from 'vitest';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import * as build from './builders.ts';
-import { connectTool, startServer, assertBlocked, assertNotBlocked, textOf, echoed } from './helpers.ts';
+import { assertBlocked, assertNotBlocked, connectTool, echoed, startServer, textOf } from './helpers.ts';
 
 // --- Unit tests (mocked exec) ---
 vi.mock('../lib/exec.ts', async importOriginal =>

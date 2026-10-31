@@ -2,8 +2,8 @@ import { faker } from '@faker-js/faker';
 import { describe, it } from 'vitest';
 import { z } from 'zod';
 import {
-  ArgsSchema, matchesAllowlist, rejectSubcommand, rejectBlockedFlags,
-  matchesApiPath, rejectApiEndpoint,
+  ArgsSchema, matchesAllowlist, matchesApiPath, rejectApiEndpoint,
+  rejectBlockedFlags, rejectSubcommand,
 } from '../lib/allowlist.ts';
 import * as build from './builders.ts';
 import { textOf } from './helpers.ts';
