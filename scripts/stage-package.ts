@@ -23,4 +23,4 @@ writeFileSync(
   `${OUT_DIR}/package.json`,
   `${JSON.stringify({ ...manifest, bin, publishConfig }, null, 2)}\n`,
 );
-['README.md', 'LICENSE'].forEach(file => copyFileSync(file, `${OUT_DIR}/${file}`));
+for (const file of ['README.md', 'LICENSE']) copyFileSync(file, `${OUT_DIR}/${file}`);

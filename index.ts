@@ -126,7 +126,7 @@ const { version } = packageJson;
 
 const server = new McpServer({ name: 'readonly', version });
 
-Object.values(tools).forEach(register => register(server));
+for (const register of Object.values(tools)) register(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
