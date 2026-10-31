@@ -1,5 +1,6 @@
 import { describe, it, beforeAll, afterAll, vi, type ExpectStatic } from "vitest";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import * as build from "./builders.ts";
 import { connectTool, startServer, assertBlocked, textOf } from "./helpers.ts";
 
 // --- Unit tests (mocked exec) ---
@@ -24,25 +25,25 @@ const execArgs = (result: CallToolResult) => JSON.parse(textOf(result));
 
 describe.concurrent("tea tool (unit)", () => {
   describe("allowed subcommands", () => {
-    it.for([
+    it.for(([
       ["branches", "list"],
-      ["comments", "list", "1"],
+      ["comments", "list", ":number"],
       ["issues"],
-      ["issues", "5"],
+      ["issues", ":number"],
       ["issues", "list"],
       ["labels", "list"],
       ["logins", "list"],
-      ["milestones", "issues", "v1.0"],
+      ["milestones", "issues", ":version"],
       ["milestones", "list"],
       ["pulls"],
-      ["pulls", "2"],
+      ["pulls", ":number"],
       ["pulls", "list"],
-      ["pulls", "review-comments", "2"],
+      ["pulls", "review-comments", ":number"],
       ["releases", "list"],
       ["repos", "list"],
-      ["repos", "search", "term"],
+      ["repos", "search", ":word"],
       ["whoami"],
-    ].map(args => ({ name: args.join(" "), args })))(
+    ] as const).map(args => ({ name: args.join(" "), args: args.map(build.template) })))(
       "allows $name", async ({ args }, { expect }) => {
         assertAllowed(expect, await callMocked(args));
       },
@@ -54,24 +55,28 @@ describe.concurrent("tea tool (unit)", () => {
   });
 
   describe("aliases", () => {
-    it.for([
+    it.for(([
       { args: ["b", "ls"], expected: ["branches", "list"] },
       { args: ["branch", "ls"], expected: ["branches", "list"] },
-      { args: ["c", "ls", "1"], expected: ["comments", "list", "1"] },
-      { args: ["comment", "list", "1"], expected: ["comments", "list", "1"] },
+      { args: ["c", "ls", ":number"], expected: ["comments", "list", ":number"] },
+      { args: ["comment", "list", ":number"], expected: ["comments", "list", ":number"] },
       { args: ["i", "ls"], expected: ["issues", "list"] },
-      { args: ["issue", "7"], expected: ["issues", "7"] },
+      { args: ["issue", ":number"], expected: ["issues", ":number"] },
       { args: ["label", "ls"], expected: ["labels", "list"] },
       { args: ["login", "ls"], expected: ["logins", "list"] },
       { args: ["milestone", "ls"], expected: ["milestones", "list"] },
-      { args: ["ms", "i", "v1.0"], expected: ["milestones", "issues", "v1.0"] },
-      { args: ["pr", "rc", "2"], expected: ["pulls", "review-comments", "2"] },
-      { args: ["pr", "2"], expected: ["pulls", "2"] },
+      { args: ["ms", "i", ":version"], expected: ["milestones", "issues", ":version"] },
+      { args: ["pr", "rc", ":number"], expected: ["pulls", "review-comments", ":number"] },
+      { args: ["pr", ":number"], expected: ["pulls", ":number"] },
       { args: ["pull", "ls"], expected: ["pulls", "list"] },
       { args: ["r", "ls"], expected: ["releases", "list"] },
       { args: ["release", "ls"], expected: ["releases", "list"] },
-      { args: ["repo", "s", "term"], expected: ["repos", "search", "term"] },
-    ].map(c => ({ name: c.args.join(" "), ...c })))(
+      { args: ["repo", "s", ":word"], expected: ["repos", "search", ":word"] },
+    ] as const).map(({ args, expected }) => {
+      // One filler per row, so the alias and its canonical form share values.
+      const fill = build.templateFiller();
+      return { args: args.map(fill), expected: expected.map(fill), name: args.join(" ") };
+    }))(
       "runs $name under its canonical names", async ({ args, expected }, { expect }) => {
         expect(execArgs(await callMocked(args))).toEqual(expected);
       },
@@ -79,17 +84,17 @@ describe.concurrent("tea tool (unit)", () => {
   });
 
   describe("view by bare index", () => {
-    it.for([
-      ["pulls", "2", "--comments"],
-      ["pulls", "2", "--comments=false"],
-      ["pulls", "-o", "json", "2"],
+    it.for(([
+      ["pulls", ":number", "--comments"],
+      ["pulls", ":number", "--comments=false"],
+      ["pulls", "-o", "json", ":number"],
       ["pulls", "--state", "open"],
-      ["pulls", "--state=open", "2"],
-      ["pulls", "-f", "index,diff", "2"],
-      ["pulls", "--", "2"],
-      ["issues", "--state", "closed", "-l", "work", "9"],
-      ["milestones", "issues", "--kind", "pull", "v1.0"],
-    ].map(args => ({ name: args.join(" "), args })))(
+      ["pulls", "--state=open", ":number"],
+      ["pulls", "-f", "index,diff", ":number"],
+      ["pulls", "--", ":number"],
+      ["issues", "--state", "closed", "-l", ":word", ":number"],
+      ["milestones", "issues", "--kind", "pull", ":version"],
+    ] as const).map(args => ({ name: args.join(" "), args: args.map(build.template) })))(
       "allows $name", async ({ args }, { expect }) => {
         assertAllowed(expect, await callMocked(args));
       },
@@ -97,24 +102,24 @@ describe.concurrent("tea tool (unit)", () => {
 
     // A noun with children dispatches to the first positional that names one,
     // even after flags, so every positional is checked, not just the first.
-    it.for([
-      ["pulls", "--state", "all", "merge", "2"],
-      ["pulls", "-o", "json", "m", "2"],
-      ["pulls", "--comments", "merge", "2"],
-      ["pulls", "--", "merge", "2"],
-      ["pulls", "2", "3"],
-      ["pulls", "title"],
-      ["pulls", "--unknown", "2"],
-      ["issues", "--state", "open", "close", "1"],
-      ["issues", "-o", "json", "e", "1"],
-      ["milestones", "issues", "add", "v1.0", "3"],
-      ["milestones", "issues", "--state", "all", "remove", "v1.0", "3"],
-      ["milestones", "issues", "-o", "json", "a", "v1.0", "3"],
-      ["milestones", "issues", "--kind", "pull", "r", "v1.0", "3"],
-      ["milestones", "issues", "v1.0", "extra"],
-    ].map(args => ({ name: args.join(" "), args })))(
+    it.for(([
+      ["pulls", "--state", "all", "merge", ":number"],
+      ["pulls", "-o", "json", "m", ":number"],
+      ["pulls", "--comments", "merge", ":number"],
+      ["pulls", "--", "merge", ":number"],
+      ["pulls", ":number", ":number"],
+      ["pulls", ":word"],
+      ["pulls", "--unknown", ":number"],
+      ["issues", "--state", "open", "close", ":number"],
+      ["issues", "-o", "json", "e", ":number"],
+      ["milestones", "issues", "add", ":version", ":number"],
+      ["milestones", "issues", "--state", "all", "remove", ":version", ":number"],
+      ["milestones", "issues", "-o", "json", "a", ":version", ":number"],
+      ["milestones", "issues", "--kind", "pull", "r", ":version", ":number"],
+      ["milestones", "issues", ":version", ":word"],
+    ] as const).map(args => ({ name: args.join(" "), args: args.map(build.template) })))(
       "blocks $name", async ({ args }, { expect }) => {
-        expect((await callMocked(args)).isError).toBeTruthy();
+        assertBlocked(expect, await callMocked(args));
       },
     );
   });
@@ -132,115 +137,116 @@ describe.concurrent("tea tool (unit)", () => {
     );
 
     it("blocks --help with extra args", async ({ expect }) => {
-      expect((await callMocked(["--help", "repos", "delete"])).isError).toBeTruthy();
+      assertBlocked(expect, await callMocked(["--help", "repos", "delete"]));
     });
   });
 
   describe("api endpoint handling", () => {
-    it.for([
-      ["api", "repos/o/r/pulls/1/reviews"],
-      ["api", "repos/o/r/pulls/1/reviews/2/comments"],
-      ["api", "repos/o/r/commits/abc/status"],
-      ["api", "repos/o/r/commits/abc/statuses"],
-      ["api", "repos/o/r/contents"],
-      ["api", "repos/o/r/contents/README.md"],
-      ["api", "repos/o/r/contents/src/main.js"],
-      ["api", "repos/o/r/raw/README.md"],
-      ["api", "repos/o/r/raw/src/main.js"],
+    it.for(([
+      ["api", "repos/:owner/:repo/pulls/:number/reviews"],
+      ["api", "repos/:owner/:repo/pulls/:number/reviews/:number/comments"],
+      ["api", "repos/:owner/:repo/commits/:sha/status"],
+      ["api", "repos/:owner/:repo/commits/:sha/statuses"],
+      ["api", "repos/:owner/:repo/contents"],
+      ["api", "repos/:owner/:repo/contents/:file"],
+      ["api", "repos/:owner/:repo/contents/:path"],
+      ["api", "repos/:owner/:repo/raw/:file"],
+      ["api", "repos/:owner/:repo/raw/:path"],
       ["api", "repos/{owner}/{repo}/pulls/1/reviews"],
-      ["api", "/repos/o/r/contents/README.md"],
-      ["api", "repos/o/r/contents/README.md?ref=main"],
-      ["api", "repos/o/r/contents/my%20file.md"],
+      ["api", "/repos/:owner/:repo/contents/:file"],
+      ["api", "repos/:owner/:repo/contents/:file?ref=:branch"],
+      ["api", "repos/:owner/:repo/contents/my%20file.md"],
       ["api", "user"],
-    ].map(args => ({ name: args[1], args })))(
+    ] as const).map(args => ({ name: args[1], args: args.map(build.template) })))(
       "allows api $name", async ({ args }, { expect }) => {
         assertAllowed(expect, await callMocked(args));
       },
     );
 
     it("allows api endpoint with flags", async ({ expect }) => {
-      assertAllowed(expect, await callMocked([
-        "api", "repos/o/r/pulls/1/reviews", "-i", "-l", "work", "--repo", "o/r",
-      ]));
+      assertAllowed(expect, await callMocked(([
+        "api", "repos/:owner/:repo/pulls/:number/reviews", "-i", "-l", ":word", "--repo", ":owner/:repo",
+      ] as const).map(build.template)));
     });
 
     it("injects --method GET immediately after the endpoint", async ({ expect }) => {
-      const args = execArgs(await callMocked(["api", "repos/o/r/pulls/1/reviews", "--", "-i"]));
-      expect(args.slice(0, 4)).toEqual(["api", "repos/o/r/pulls/1/reviews", "--method", "GET"]);
+      const endpoint = build.template("repos/:owner/:repo/pulls/:number/reviews");
+      const args = execArgs(await callMocked(["api", endpoint, "--", "-i"]));
+      expect(args.slice(0, 4)).toEqual(["api", endpoint, "--method", "GET"]);
     });
 
-    it.for([
+    it.for(([
       ["api"],
       ["api", "-i", "user"],
-      ["api", "repos/o/r/pulls/1/merge"],
-      ["api", "repos/o/r/raw"],
+      ["api", "repos/:owner/:repo/pulls/:number/merge"],
+      ["api", "repos/:owner/:repo/raw"],
       ["api", "user/repos"],
       ["api", "admin/users"],
       ["api", "/api/v1/admin/users"],
-      ["api", "https://gitea.example.com/api/v1/user"],
-      ["api", "http://gitea.example.com/api/v1/user"],
+      ["api", "https://:host/api/v1/user"],
+      ["api", "http://:host/api/v1/user"],
       // contents/** and raw/** take any depth, so a dot segment could climb
       // out to an endpoint the allowlist never named.
-      ["api", "repos/o/r/contents/../../../../admin/users"],
-      ["api", "repos/o/r/raw/./../../../admin/users"],
-      ["api", "repos/o/r/contents/%2e%2e/%2E%2E/%2e%2e/%2e%2e/admin/users"],
-      ["api", "repos/o/r/contents/..%2f..%2f..%2f..%2fadmin/users"],
-      ["api", "repos/o/r/contents/..%5c..%5cadmin"],
-      ["api", "repos/o/r/contents/%zz"],
+      ["api", "repos/:owner/:repo/contents/../../../../admin/users"],
+      ["api", "repos/:owner/:repo/raw/./../../../admin/users"],
+      ["api", "repos/:owner/:repo/contents/%2e%2e/%2E%2E/%2e%2e/%2e%2e/admin/users"],
+      ["api", "repos/:owner/:repo/contents/..%2f..%2f..%2f..%2fadmin/users"],
+      ["api", "repos/:owner/:repo/contents/..%5c..%5cadmin"],
+      ["api", "repos/:owner/:repo/contents/%zz"],
       // Double-encoded, so one decode leaves a dot or separator still
       // encoded for any later decode to resolve.
-      ["api", "repos/o/r/contents/%252e%252e/%252e%252e/%252e%252e/%252e%252e/admin/users"],
-      ["api", "repos/o/r/raw/..%252f..%252f..%252f..%252fadmin%252fusers"],
-      ["api", "repos/o/r/raw/..%255c..%255cadmin"],
+      ["api", "repos/:owner/:repo/contents/%252e%252e/%252e%252e/%252e%252e/%252e%252e/admin/users"],
+      ["api", "repos/:owner/:repo/raw/..%252f..%252f..%252f..%252fadmin%252fusers"],
+      ["api", "repos/:owner/:repo/raw/..%255c..%255cadmin"],
       // The URL parser cuts the path at `#`, so a fragment hidden in a
       // wildcard segment would send the request to a truncated endpoint.
       ["api", "repos/admin#/x/contents/y"],
-      ["api", "repos/o/r/contents/README.md#L1"],
-    ].map(args => ({ name: args.slice(1).join(" ") || "(bare)", args })))(
+      ["api", "repos/:owner/:repo/contents/:file#L1"],
+    ] as const).map(args => ({ name: args.slice(1).join(" ") || "(bare)", args: args.map(build.template) })))(
       "blocks api $name", async ({ args }, { expect }) => {
-        expect((await callMocked(args)).isError).toBeTruthy();
+        assertBlocked(expect, await callMocked(args));
       },
     );
 
-    it.for([
+    it.for(([
       ["--method", "POST"],
       ["--method=DELETE"],
       ["-method", "POST"],
       ["--meth", "POST"],
       ["-X", "POST"],
       ["-XPOST"],
-      ["-f", "body=text"],
-      ["-fbody=text"],
-      ["--field", "body=text"],
-      ["-field", "body=text"],
-      ["-F", "body=@file"],
-      ["--Field", "body=@file"],
-      ["-Field=body=@file"],
+      ["-f", ":word=:word"],
+      ["-f:word=:word"],
+      ["--field", ":word=:word"],
+      ["-field", ":word=:word"],
+      ["-F", ":word=@:file"],
+      ["--Field", ":word=@:file"],
+      ["-Field=:word=@:file"],
       ["-H", "Accept: text/plain"],
-      ["--header", "X-Custom: val"],
-      ["-header", "X-Custom: val"],
-      ["-d", "@file.json"],
+      ["--header", "X-:word: :word"],
+      ["-header", "X-:word: :word"],
+      ["-d", "@:file"],
       ["--data", "{}"],
       ["-data={}"],
-      ["-o", "out.json"],
-      ["--output", "out.json"],
-      ["-output=out.json"],
+      ["-o", ":file"],
+      ["--output", ":file"],
+      ["-output=:file"],
       ["--debug"],
       ["--repo", "../other/repo"],
-    ].map(flags => ({ name: flags.join(" "), flags })))(
+    ] as const).map(flags => ({ name: flags.join(" "), flags: flags.map(build.template) })))(
       "blocks api flag $name", async ({ flags }, { expect }) => {
-        expect((await callMocked(["api", "repos/o/r/pulls/1/reviews", ...flags])).isError).toBeTruthy();
+        assertBlocked(expect, await callMocked(["api", build.template("repos/:owner/:repo/pulls/:number/reviews"), ...flags]));
       },
     );
   });
 
   describe("--repo", () => {
-    it.for([
-      ["pulls", "list", "--repo", "owner/name"],
-      ["pulls", "list", "--repo=owner/name"],
-      ["pulls", "list", "-r", "owner/name"],
+    it.for(([
+      ["pulls", "list", "--repo", ":owner/:repo"],
+      ["pulls", "list", "--repo=:owner/:repo"],
+      ["pulls", "list", "-r", ":owner/:repo"],
       ["pulls", "list", "-repo", "my.org/my-repo_2"],
-    ].map(args => ({ name: args.slice(2).join(" "), args })))(
+    ] as const).map(args => ({ name: args.slice(2).join(" "), args: args.map(build.template) })))(
       "allows repository slug $name", async ({ args }, { expect }) => {
         assertAllowed(expect, await callMocked(args));
       },
@@ -248,20 +254,20 @@ describe.concurrent("tea tool (unit)", () => {
 
     // --repo also accepts a local repository path, which would point tea at a
     // directory outside the server's working directory.
-    it.for([
+    it.for(([
       ["pulls", "list", "--repo", "C:/Users/someone/repo"],
       ["pulls", "list", "--repo", "/etc/repo"],
       ["pulls", "list", "--repo", "../other"],
       ["pulls", "list", "--repo", "..\\other"],
       ["pulls", "list", "--repo", "../other/repo"],
-      ["pulls", "list", "--repo", "owner/name/extra"],
+      ["pulls", "list", "--repo", ":owner/:repo/:word"],
       ["pulls", "list", "--repo=../other/repo"],
       ["pulls", "list", "-r", "./x"],
       ["pulls", "list", "-repo=../other/repo"],
-      ["pulls", "2", "-r", "../other/repo"],
-    ].map(args => ({ name: args.slice(2).join(" "), args })))(
+      ["pulls", ":number", "-r", "../other/repo"],
+    ] as const).map(args => ({ name: args.slice(2).join(" "), args: args.map(build.template) })))(
       "blocks local path $name", async ({ args }, { expect }) => {
-        expect((await callMocked(args)).isError).toBeTruthy();
+        assertBlocked(expect, await callMocked(args));
       },
     );
   });
@@ -274,83 +280,83 @@ describe.concurrent("tea tool (integration)", () => {
   afterAll(() => server.close());
 
   it.for(
-    [
+    ([
       ["actions", "secrets", "list"],
       ["admin", "users"],
-      ["branches", "protect", "main"], ["branches", "P", "main"],
-      ["branches", "rename", "a", "b"], ["branches", "rn", "a", "b"],
-      ["branches", "unprotect", "main"], ["branches", "U", "main"],
-      ["clone", "o/r"], ["C", "o/r"],
-      ["comments", "1", "body"],
-      ["comments", "add", "1", "body"], ["comments", "a", "1", "body"],
-      ["comments", "delete", "1"], ["comments", "rm", "1"],
-      ["comments", "edit", "1"], ["comments", "e", "1"],
-      ["issues", "close", "1"],
+      ["branches", "protect", ":branch"], ["branches", "P", ":branch"],
+      ["branches", "rename", ":branch", ":branch"], ["branches", "rn", ":branch", ":branch"],
+      ["branches", "unprotect", ":branch"], ["branches", "U", ":branch"],
+      ["clone", ":owner/:repo"], ["C", ":owner/:repo"],
+      ["comments", ":number", ":word"],
+      ["comments", "add", ":number", ":word"], ["comments", "a", ":number", ":word"],
+      ["comments", "delete", ":number"], ["comments", "rm", ":number"],
+      ["comments", "edit", ":number"], ["comments", "e", ":number"],
+      ["issues", "close", ":number"],
       ["issues", "create"], ["issues", "c"],
-      ["issues", "edit", "1"], ["issues", "e", "1"],
-      ["issues", "reopen", "1"], ["issues", "open", "1"],
+      ["issues", "edit", ":number"], ["issues", "e", ":number"],
+      ["issues", "reopen", ":number"], ["issues", "open", ":number"],
       ["labels", "create"], ["labels", "c"],
       ["labels", "delete"], ["labels", "rm"],
       ["labels", "update"],
       ["logins", "add"],
-      ["logins", "default", "x"],
-      ["logins", "delete", "x"], ["logins", "rm", "x"],
+      ["logins", "default", ":word"],
+      ["logins", "delete", ":word"], ["logins", "rm", ":word"],
       ["logins", "edit"], ["logins", "e"],
       ["logins", "helper", "get"], ["logins", "git-credential", "get"],
       ["login", "helper", "get"], ["login", "git-credential", "get"],
       ["logins", "oauth-refresh"],
       ["logins", "status"],
       ["logout"],
-      ["milestones", "close", "v1"],
+      ["milestones", "close", ":version"],
       ["milestones", "create"], ["ms", "c"],
-      ["milestones", "delete", "v1"], ["ms", "rm", "v1"],
-      ["milestones", "reopen", "v1"], ["ms", "open", "v1"],
+      ["milestones", "delete", ":version"], ["ms", "rm", ":version"],
+      ["milestones", "reopen", ":version"], ["ms", "open", ":version"],
       ["notifications", "list"], ["notifications", "read"], ["n", "ls"],
       ["open"], ["o"],
       ["organizations", "list"],
-      ["pulls", "approve", "1"], ["pr", "lgtm", "1"], ["pr", "a", "1"],
-      ["pulls", "checkout", "1"], ["pr", "co", "1"],
-      ["pulls", "clean", "1"],
-      ["pulls", "close", "1"],
+      ["pulls", "approve", ":number"], ["pr", "lgtm", ":number"], ["pr", "a", ":number"],
+      ["pulls", "checkout", ":number"], ["pr", "co", ":number"],
+      ["pulls", "clean", ":number"],
+      ["pulls", "close", ":number"],
       ["pulls", "create"], ["pr", "c"],
-      ["pulls", "edit", "1"], ["pr", "e", "1"],
-      ["pulls", "merge", "1"], ["pr", "m", "1"],
-      ["pulls", "reject", "1"],
-      ["pulls", "reopen", "1"], ["pr", "open", "1"],
-      ["pulls", "reply", "1"],
-      ["pulls", "resolve", "1"],
-      ["pulls", "review", "1"],
-      ["pulls", "unresolve", "1"],
+      ["pulls", "edit", ":number"], ["pr", "e", ":number"],
+      ["pulls", "merge", ":number"], ["pr", "m", ":number"],
+      ["pulls", "reject", ":number"],
+      ["pulls", "reopen", ":number"], ["pr", "open", ":number"],
+      ["pulls", "reply", ":number"],
+      ["pulls", "resolve", ":number"],
+      ["pulls", "review", ":number"],
+      ["pulls", "unresolve", ":number"],
       ["releases", "assets", "list"], ["r", "a", "list"],
       ["releases", "create"], ["r", "c"],
-      ["releases", "delete", "v1"], ["r", "rm", "v1"],
-      ["releases", "edit", "v1"], ["r", "e", "v1"],
+      ["releases", "delete", ":version"], ["r", "rm", ":version"],
+      ["releases", "edit", ":version"], ["r", "e", ":version"],
       ["repos", "create"], ["repo", "c"],
       ["repos", "create-from-template"], ["repo", "ct"],
-      ["repos", "delete", "o/r"], ["repo", "rm", "o/r"],
+      ["repos", "delete", ":owner/:repo"], ["repo", "rm", ":owner/:repo"],
       ["repos", "edit"], ["repo", "e"],
-      ["repos", "fork", "o/r"], ["repo", "f", "o/r"],
+      ["repos", "fork", ":owner/:repo"], ["repo", "f", ":owner/:repo"],
       ["repos", "migrate"], ["repo", "m"],
       ["ssh-keys", "list"],
       ["times", "list"],
       ["webhooks", "list"],
       ["wiki", "list"],
-    ].map(args => ({ name: args.join(" "), args }))
+    ] as const).map(args => ({ name: args.join(" "), args: args.map(build.template) }))
   )("blocks $name", async ({ args }, { expect }) => {
     assertBlocked(expect, await server.callTool("tea", { args }));
   });
 
   // --debug may print the Authorization header; blocked until shown not to.
   describe("blocked debug flags", () => {
-    it.for([
+    it.for(([
       ["--debug", "pulls", "list"],
       ["pulls", "list", "--debug"],
       ["pulls", "list", "-debug"],
       ["pulls", "list", "--vvv"],
       ["pulls", "list", "-vvv"],
-      ["pulls", "2", "--debug"],
+      ["pulls", ":number", "--debug"],
       ["whoami", "--debug"],
-    ].map(args => ({ name: args.join(" "), args })))(
+    ] as const).map(args => ({ name: args.join(" "), args: args.map(build.template) })))(
       "blocks $name", async ({ args }, { expect }) => {
         assertBlocked(expect, await server.callTool("tea", { args }));
       },
@@ -359,13 +365,13 @@ describe.concurrent("tea tool (integration)", () => {
 
   // --save writes the label set to a file.
   describe("blocked labels --save", () => {
-    it.for([
+    it.for(([
       ["labels", "list", "--save"],
       ["labels", "list", "--save=true"],
       ["labels", "list", "-save"],
       ["labels", "list", "-s"],
       ["label", "ls", "-s"],
-    ].map(args => ({ name: args.join(" "), args })))(
+    ] as const).map(args => ({ name: args.join(" "), args: args.map(build.template) })))(
       "blocks $name", async ({ args }, { expect }) => {
         assertBlocked(expect, await server.callTool("tea", { args }));
       },
