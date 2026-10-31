@@ -25,12 +25,14 @@ describe.concurrent('git tool (unit)', () => {
     it('injects --no-pager as first arg', async ({ expect }) => {
       const result = await callMocked(['log', '--oneline', '-1']);
       const { args } = echoed(result);
+
       expect(args[0]).toBe('--no-pager');
     });
 
     it('preserves original args after --no-pager', async ({ expect }) => {
       const result = await callMocked(['status']);
       const { args } = echoed(result);
+
       expect(args).toEqual(['--no-pager', 'status']);
     });
   });
@@ -70,6 +72,7 @@ describe.concurrent('git tool (unit)', () => {
 
     it('rejects cwd that is not a known worktree', async ({ expect }) => {
       const result = await callMocked(['status'], build.absolutePath());
+
       expect(result?.isError).toBe(true);
       expect(textOf(result)).toContain('cwd rejected');
     });
@@ -77,6 +80,7 @@ describe.concurrent('git tool (unit)', () => {
     it('prepends -C for valid worktree cwd', async ({ expect }) => {
       const result = await callMocked(['status'], toplevel);
       const { args } = echoed(result);
+
       expect(args[0]).toBe('--no-pager');
       expect(args[1]).toBe('-C');
       expect(args[2]).toBe(toplevel);
@@ -86,11 +90,13 @@ describe.concurrent('git tool (unit)', () => {
     it('omits -C when cwd is not provided', async ({ expect }) => {
       const result = await callMocked(['status']);
       const { args } = echoed(result);
+
       expect(args).toEqual(['--no-pager', 'status']);
     });
 
     it('rejects path traversal from valid worktree', async ({ expect }) => {
       const result = await callMocked(['status'], toplevel + '/../../../tmp');
+
       expect(result?.isError).toBe(true);
       expect(textOf(result)).toContain('cwd rejected');
     });
@@ -98,11 +104,13 @@ describe.concurrent('git tool (unit)', () => {
     it('accepts trailing slash (resolve normalizes it)', async ({ expect }) => {
       const result = await callMocked(['status'], toplevel + '/');
       const { args } = echoed(result);
+
       expect(args[1]).toBe('-C');
     });
 
     it('rejects an empty cwd at the input schema', async ({ expect }) => {
       const result = await callMocked(['status'], '');
+
       expect(result.isError).toBe(true);
       expect(textOf(result)).toMatch(/Input validation error[\s\S]*"cwd"/);
     });
@@ -116,6 +124,7 @@ describe.concurrent('git tool (unit)', () => {
           toplevel.slice(1);
         const result = await callMocked(['status'], swapped);
         const { args } = echoed(result);
+
         expect(args[1]).toBe('-C');
       },
     );
@@ -125,6 +134,7 @@ describe.concurrent('git tool (unit)', () => {
       async ({ expect }) => {
         const result = await callMocked(['status'], toplevel.replace(/\\/g, '/'));
         const { args } = echoed(result);
+
         expect(args[1]).toBe('-C');
       },
     );
@@ -134,7 +144,9 @@ describe.concurrent('git tool (unit)', () => {
 // --- Integration tests (real MCP server) ---
 describe.concurrent('git tool (integration)', () => {
   let server: ReturnType<typeof startServer>;
+
   beforeAll(async () => { server = startServer(); await server.initialize(); });
+
   afterAll(() => server.close());
 
   describe('blocked subcommands', () => {
@@ -189,6 +201,7 @@ describe.concurrent('git tool (integration)', () => {
     it('allows describe', async ({ expect }) => {
       // May fail if no tags exist, but should not be blocked
       const result = await server.callTool('git', { args: ['describe', '--tags'] });
+
       expect(result?.isError).not.toBe(true);
     });
 
@@ -446,6 +459,7 @@ describe.concurrent('git tool (integration)', () => {
     it('resolves HEAD from linked worktree, not main', async ({ expect }) => {
       const result = await server.callTool('git', { args: ['rev-parse', '--abbrev-ref', 'HEAD'], cwd: worktreePath });
       const branch = textOf(result).trim();
+
       expect(branch).toBe(branchName);
     });
   });

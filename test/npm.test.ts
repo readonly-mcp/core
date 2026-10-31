@@ -32,12 +32,14 @@ describe.concurrent('npm tool (unit)', () => {
     it('injects --ignore-scripts as first arg', async ({ expect }) => {
       const result = await callMocked(['ls']);
       const { args } = echoed(result);
+
       expect(args[0]).toBe('--ignore-scripts');
     });
 
     it('prepends --ignore-scripts before subcommand', async ({ expect }) => {
       const result = await callMocked(['view', 'zod']);
       const { args } = echoed(result);
+
       expect(args).toEqual(['--ignore-scripts', 'view', 'zod']);
     });
   });

@@ -70,6 +70,7 @@ describe.concurrent('az tool (unit)', () => {
       );
       const { args } = echoed(result);
       const methodIdx = args.indexOf('--http-method');
+
       expect(methodIdx, 'should contain --http-method').not.toBe(-1);
       expect(args[methodIdx + 1]).toBe('GET');
     });
@@ -80,7 +81,9 @@ describe.concurrent('az tool (unit)', () => {
 
 describe.concurrent('az tool (integration)', () => {
   let server: ReturnType<typeof startServer>;
+
   beforeAll(async () => { server = startServer(); await server.initialize(); });
+
   afterAll(() => server.close());
 
   const call = (args: readonly string[]) => server.callTool('az', { args });
@@ -198,18 +201,21 @@ describe.concurrent('az tool (integration)', () => {
   describe('missing required invoke flags', () => {
     it('reports missing --area', async ({ expect }) => {
       const result = await call(['devops', 'invoke', '--resource', 'builds']);
+
       expect(result?.isError).toBe(true);
       expect(textOf(result)).toContain('Missing required flag: --area');
     });
 
     it('reports missing --resource', async ({ expect }) => {
       const result = await call(['devops', 'invoke', '--area', 'build']);
+
       expect(result?.isError).toBe(true);
       expect(textOf(result)).toContain('Missing required flag: --resource');
     });
 
     it('reports missing --area when both absent', async ({ expect }) => {
       const result = await call(['devops', 'invoke']);
+
       expect(result?.isError).toBe(true);
       expect(textOf(result)).toContain('Missing required flag');
     });

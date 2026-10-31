@@ -30,7 +30,9 @@ describe.concurrent('shell tool (unit)', () => {
 // --- Integration tests (real MCP server) ---
 describe.concurrent('shell tool (integration)', () => {
   let server: ReturnType<typeof startServer>;
+
   beforeAll(async () => { server = startServer(); await server.initialize(); });
+
   afterAll(() => server.close());
 
   describe('blocked commands', () => {

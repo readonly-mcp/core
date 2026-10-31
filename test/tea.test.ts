@@ -166,6 +166,7 @@ describe.concurrent('tea tool (unit)', () => {
     it('injects --method GET immediately after the endpoint', async ({ expect }) => {
       const endpoint = build.template('repos/:owner/:repo/pulls/:number/reviews');
       const { args } = echoed(await callMocked(['api', endpoint, '--', '-i']));
+
       expect(args.slice(0, 4)).toEqual(['api', endpoint, '--method', 'GET']);
     });
 
@@ -270,7 +271,9 @@ describe.concurrent('tea tool (unit)', () => {
 // --- Integration tests (real MCP server) ---
 describe.concurrent('tea tool (integration)', () => {
   let server: ReturnType<typeof startServer>;
+
   beforeAll(async () => { server = startServer(); await server.initialize(); });
+
   afterAll(() => server.close());
 
   it.for(

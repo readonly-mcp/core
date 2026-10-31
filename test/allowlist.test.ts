@@ -13,11 +13,13 @@ describe('ArgsSchema coercion', () => {
 
   it('accepts a normal array', ({ expect }) => {
     const args = [faker.lorem.word(), build.longFlag()];
+
     expect(schema.parse({ args }).args).toEqual(args);
   });
 
   it('coerces a JSON-stringified array to an array', ({ expect }) => {
     const args = [faker.lorem.word(), build.longFlag()];
+
     expect(schema.parse({ args: JSON.stringify(args) }).args).toEqual(args);
   });
 
@@ -128,6 +130,7 @@ describe('matchesAllowlist', () => {
       // This is a known quirk — safe because execFile passes it as one argv element
       // which the target CLI would reject
       const entry = build.words(2).join(' ');
+
       expect(matchesAllowlist([entry], new Set([entry]))).toBe(true);
     });
 
@@ -144,22 +147,26 @@ describe('rejectSubcommand', () => {
 
   it('returns isError: true', ({ expect }) => {
     const result = rejectSubcommand([word()], allowlist);
+
     expect(result.isError).toBe(true);
   });
 
   it('includes the rejected subcommand in message', ({ expect }) => {
     const rejected = word();
     const result = rejectSubcommand([rejected], allowlist);
+
     expect(textOf(result)).toContain(`not allowed: ${rejected}.`);
   });
 
   it('includes allowed subcommands in message', ({ expect }) => {
     const result = rejectSubcommand([word()], allowlist);
+
     expect(textOf(result)).toContain(`Allowed: ${allowed.join(', ')}`);
   });
 
   it('shows (none) for empty args', ({ expect }) => {
     const result = rejectSubcommand([], allowlist);
+
     expect(textOf(result)).toContain('(none)');
   });
 });
@@ -175,11 +182,13 @@ describe('rejectBlockedFlags', () => {
   describe('exact matches', () => {
     it('blocks exact flag', ({ expect }) => {
       const result = rejectBlockedFlags([faker.lorem.word(), '--fix'], blocked);
+
       expect(result?.isError).toBe(true);
     });
 
     it('blocks flag=value form', ({ expect }) => {
       const result = rejectBlockedFlags([faker.lorem.word(), `--registry=${build.httpsUrl()}`], blocked);
+
       expect(result?.isError).toBe(true);
     });
 
@@ -198,21 +207,25 @@ describe('rejectBlockedFlags', () => {
   describe('prefix matching (abbreviation defense)', () => {
     it('blocks abbreviated --reg (matches --registry)', ({ expect }) => {
       const result = rejectBlockedFlags([faker.lorem.word(), '--reg', build.httpsUrl()], blocked);
+
       expect(result?.isError).toBe(true);
     });
 
     it('blocks abbreviated --registr', ({ expect }) => {
       const result = rejectBlockedFlags([faker.lorem.word(), '--registr', build.httpsUrl()], blocked);
+
       expect(result?.isError).toBe(true);
     });
 
     it('blocks abbreviated --fi (matches --fix)', ({ expect }) => {
       const result = rejectBlockedFlags([faker.lorem.word(), '--fi'], blocked);
+
       expect(result?.isError).toBe(true);
     });
 
     it('blocks abbreviated --reg=value form', ({ expect }) => {
       const result = rejectBlockedFlags([faker.lorem.word(), `--reg=${build.httpsUrl()}`], blocked);
+
       expect(result?.isError).toBe(true);
     });
 
@@ -238,24 +251,28 @@ describe('rejectBlockedFlags', () => {
 
     it('blocks -XPOST (value concatenated to short flag)', ({ expect }) => {
       const result = rejectBlockedFlags([faker.lorem.word(), faker.lorem.word(), '-XPOST'], shortBlocked);
+
       expect(result?.isError).toBe(true);
     });
 
     it('blocks -fkey=val (value concatenated to short flag)', ({ expect }) => {
       const arg = `-f${faker.lorem.word()}=${faker.lorem.word()}`;
       const result = rejectBlockedFlags([faker.lorem.word(), faker.lorem.word(), arg], shortBlocked);
+
       expect(result?.isError).toBe(true);
     });
 
     it('does not false-positive on long flag starting with single dash char', ({ expect }) => {
       // -Xtra is not a concatenated -X if -X is not in the blocked set for this test
       const unrelated = new Set(['--registry']);
+
       expect(rejectBlockedFlags([faker.lorem.word(), '-Xtra'], unrelated)).toBeNull();
     });
 
     it('does not apply short-flag rule to long flags', ({ expect }) => {
       // --method is 8 chars, not a 2-char short flag
       const longOnly = new Set(['--method']);
+
       // "--methodical" should NOT be caught by the short-flag rule (only by prefix)
       // prefix check: "--method".startsWith("--methodical") → false
       // long flag rule doesn't apply (--method.length !== 2)
@@ -286,6 +303,7 @@ describe('rejectBlockedFlags', () => {
 
     it('reports the first blocked flag found', ({ expect }) => {
       const result = rejectBlockedFlags([faker.lorem.word(), '--fix', '--registry'], blocked);
+
       expect(textOf(result)).toBe('Flag not allowed: --fix');
     });
   });
@@ -396,22 +414,26 @@ describe('rejectApiEndpoint', () => {
 
   it('returns isError: true', ({ expect }) => {
     const result = rejectApiEndpoint(`${build.repoApiPath()}/${faker.lorem.word()}`, patterns);
+
     expect(result.isError).toBe(true);
   });
 
   it('includes normalized endpoint in message', ({ expect }) => {
     const endpoint = `${build.repoApiPath()}/${faker.lorem.word()}`;
     const result = rejectApiEndpoint(`/${endpoint}${build.queryString()}`, patterns);
+
     expect(textOf(result)).toContain(`not allowed: ${endpoint}.`);
   });
 
   it('includes allowed patterns in message', ({ expect }) => {
     const result = rejectApiEndpoint(build.words(2).join('/'), patterns);
+
     expect(textOf(result)).toContain('repos/*/pulls/*/comments');
   });
 
   it('shows (none) for undefined endpoint', ({ expect }) => {
     const result = rejectApiEndpoint(undefined, patterns);
+
     expect(textOf(result)).toContain('(none)');
   });
 });

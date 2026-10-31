@@ -24,6 +24,7 @@ describe.concurrent('shell injection', () => {
 
   const assertCanaryIntact = async (expect: ExpectStatic, label: string) => {
     const content = await readFile(canaryFile, 'utf8');
+
     expect(content, `canary modified by ${label}`).toBe('ORIGINAL');
   };
 

@@ -143,6 +143,7 @@ describe.concurrent('gh tool (unit)', () => {
       const { args } = echoed(result);
       const methodIdx = args.indexOf('--method');
       const jqIdx = args.indexOf('--jq');
+
       expect(methodIdx).toBeGreaterThan(-1);
       expect(args[methodIdx + 1]).toBe('GET');
       expect(methodIdx).toBeLessThan(jqIdx);
@@ -155,6 +156,7 @@ describe.concurrent('gh tool (unit)', () => {
       const { args } = echoed(result);
       const methodIdx = args.indexOf('--method');
       const dashDashIdx = args.indexOf('--');
+
       expect(methodIdx).toBeGreaterThan(-1);
       expect(methodIdx).toBeLessThan(dashDashIdx);
     });
@@ -261,6 +263,7 @@ describe.concurrent('gh tool (unit)', () => {
       const result = await callMocked(['api', build.template('repos/:owner/:repo/contents/:file')]);
       const { args } = echoed(result);
       const hIdx = args.indexOf('-H');
+
       expect(hIdx).toBeGreaterThan(-1);
       expect(args[hIdx + 1]).toBe('Accept: application/vnd.github.raw+json');
     });
@@ -269,6 +272,7 @@ describe.concurrent('gh tool (unit)', () => {
       const result = await callMocked(['api', build.template('repos/:owner/:repo/contents')]);
       const { args } = echoed(result);
       const hIdx = args.indexOf('-H');
+
       expect(hIdx).toBeGreaterThan(-1);
       expect(args[hIdx + 1]).toBe('Accept: application/vnd.github.raw+json');
     });
@@ -276,6 +280,7 @@ describe.concurrent('gh tool (unit)', () => {
     it('does not inject Accept header for non-contents endpoint', async ({ expect }) => {
       const result = await callMocked(['api', build.prCommentsPath()]);
       const { args } = echoed(result);
+
       expect(args.indexOf('-H')).toBe(-1);
     });
   });
@@ -284,7 +289,9 @@ describe.concurrent('gh tool (unit)', () => {
 // --- Integration tests (real MCP server) ---
 describe.concurrent('gh tool (integration)', () => {
   let server: ReturnType<typeof startServer>;
+
   beforeAll(async () => { server = startServer(); await server.initialize(); });
+
   afterAll(() => server.close());
 
   it.for(

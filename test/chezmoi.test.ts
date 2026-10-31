@@ -33,7 +33,9 @@ describe.concurrent('chezmoi tool (unit)', () => {
 // --- Integration tests (real MCP server) ---
 describe.concurrent('chezmoi tool (integration)', () => {
   let server: ReturnType<typeof startServer>;
+
   beforeAll(async () => { server = startServer(); await server.initialize(); });
+
   afterAll(() => server.close());
 
   it.for(
