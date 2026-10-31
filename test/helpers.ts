@@ -98,7 +98,7 @@ export const startServer = ({ cwd = process.cwd() }: { readonly cwd?: string } =
   };
 
   // Subscribed at spawn so an exit before close still resolves it.
-  const exited = new Promise<void>(resolve => proc.once('exit', () => resolve()));
+  const exited = new Promise<void>(resolve => proc.once('exit', () => { resolve(); }));
 
   /*
    * Resolves once the process has exited: Windows refuses to delete a
