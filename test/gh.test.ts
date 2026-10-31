@@ -2,15 +2,11 @@ import { faker } from "@faker-js/faker";
 import { describe, it, beforeAll, afterAll, vi, type ExpectStatic } from "vitest";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import * as build from "./builders.ts";
-import { connectTool, startServer, assertBlocked, textOf } from "./helpers.ts";
+import { connectTool, startServer, assertBlocked, textOf, echoed } from "./helpers.ts";
 
 // --- Unit tests (mocked exec) ---
-vi.mock("../lib/exec.ts", () => ({
-  exec: async (_cmd: string, args: readonly string[]) => ({
-    content: [{ type: "text", text: JSON.stringify(args) }],
-  }),
-  fail: (msg: string) => ({ content: [{ type: "text", text: msg }], isError: true }),
-}));
+vi.mock("../lib/exec.ts", async (importOriginal) =>
+  (await import("./helpers.ts")).withEchoExec(importOriginal));
 
 const { register } = await import("../tools/gh.ts");
 
@@ -144,7 +140,7 @@ describe.concurrent("gh tool (unit)", () => {
       const result = await callMocked([
         "api", build.prCommentsPath(), "--jq", ".[].id",
       ]);
-      const args = JSON.parse(textOf(result));
+      const { args } = echoed(result);
       const methodIdx = args.indexOf("--method");
       const jqIdx = args.indexOf("--jq");
       expect(methodIdx).toBeGreaterThan(-1);
@@ -156,7 +152,7 @@ describe.concurrent("gh tool (unit)", () => {
       const result = await callMocked([
         "api", build.prCommentsPath(), "--",
       ]);
-      const args = JSON.parse(textOf(result));
+      const { args } = echoed(result);
       const methodIdx = args.indexOf("--method");
       const dashDashIdx = args.indexOf("--");
       expect(methodIdx).toBeGreaterThan(-1);
@@ -263,7 +259,7 @@ describe.concurrent("gh tool (unit)", () => {
 
     it("injects raw Accept header for contents endpoint", async ({ expect }) => {
       const result = await callMocked(["api", build.template("repos/:owner/:repo/contents/:file")]);
-      const args = JSON.parse(textOf(result));
+      const { args } = echoed(result);
       const hIdx = args.indexOf("-H");
       expect(hIdx).toBeGreaterThan(-1);
       expect(args[hIdx + 1]).toBe("Accept: application/vnd.github.raw+json");
@@ -271,7 +267,7 @@ describe.concurrent("gh tool (unit)", () => {
 
     it("injects raw Accept header for bare contents endpoint", async ({ expect }) => {
       const result = await callMocked(["api", build.template("repos/:owner/:repo/contents")]);
-      const args = JSON.parse(textOf(result));
+      const { args } = echoed(result);
       const hIdx = args.indexOf("-H");
       expect(hIdx).toBeGreaterThan(-1);
       expect(args[hIdx + 1]).toBe("Accept: application/vnd.github.raw+json");
@@ -279,7 +275,7 @@ describe.concurrent("gh tool (unit)", () => {
 
     it("does not inject Accept header for non-contents endpoint", async ({ expect }) => {
       const result = await callMocked(["api", build.prCommentsPath()]);
-      const args = JSON.parse(textOf(result));
+      const { args } = echoed(result);
       expect(args.indexOf("-H")).toBe(-1);
     });
   });

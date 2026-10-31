@@ -1,20 +1,14 @@
 import { describe, it, beforeAll, afterAll, vi, type ExpectStatic } from "vitest";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import * as build from "./builders.ts";
-import { connectTool, startServer, assertBlocked, textOf } from "./helpers.ts";
+import { connectTool, startServer, assertBlocked, textOf, echoed } from "./helpers.ts";
 
 // --- Unit tests (mocked execShell) ---
 // Allowed paths hit the real `az` CLI which is slow (~1-2s per call),
 // so we mock execShell to keep these fast.
-// The mock encodes received args in its response so each test can
-// inspect its own return value without shared mutable state.
 
-vi.mock("../lib/exec.ts", () => ({
-  execShell: async (_cmd: string, args: readonly string[]) => ({
-    content: [{ type: "text", text: JSON.stringify(args) }],
-  }),
-  fail: (msg: string) => ({ content: [{ type: "text", text: msg }], isError: true }),
-}));
+vi.mock("../lib/exec.ts", async (importOriginal) =>
+  (await import("./helpers.ts")).withEchoExec(importOriginal));
 
 const { register } = await import("../tools/az.ts");
 
@@ -74,7 +68,7 @@ describe.concurrent("az tool (unit)", () => {
       const result = await callMocked(
         ["devops", "invoke", "--area", "build", "--resource", "builds"],
       );
-      const args = JSON.parse(textOf(result));
+      const { args } = echoed(result);
       const methodIdx = args.indexOf("--http-method");
       expect(methodIdx, "should contain --http-method").not.toBe(-1);
       expect(args[methodIdx + 1]).toBe("GET");

@@ -4,15 +4,11 @@ import { tmpdir } from "node:os";
 import { describe, it, beforeAll, afterAll, vi, type ExpectStatic } from "vitest";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import * as build from "./builders.ts";
-import { connectTool, startServer, assertBlocked, assertNotBlocked, textOf } from "./helpers.ts";
+import { connectTool, startServer, assertBlocked, assertNotBlocked, textOf, echoed } from "./helpers.ts";
 
 // --- Unit tests (mocked exec) ---
-vi.mock("../lib/exec.ts", () => ({
-  exec: async (_cmd: string, args: readonly string[]) => ({
-    content: [{ type: "text", text: JSON.stringify({ cmd: _cmd, args }) }],
-  }),
-  fail: (msg: string) => ({ content: [{ type: "text", text: msg }], isError: true }),
-}));
+vi.mock("../lib/exec.ts", async (importOriginal) =>
+  (await import("./helpers.ts")).withEchoExec(importOriginal));
 
 const { register } = await import("../tools/git.ts");
 
@@ -28,13 +24,13 @@ describe.concurrent("git tool (unit)", () => {
   describe("--no-pager injection", () => {
     it("injects --no-pager as first arg", async ({ expect }) => {
       const result = await callMocked(["log", "--oneline", "-1"]);
-      const { args } = JSON.parse(textOf(result));
+      const { args } = echoed(result);
       expect(args[0]).toBe("--no-pager");
     });
 
     it("preserves original args after --no-pager", async ({ expect }) => {
       const result = await callMocked(["status"]);
-      const { args } = JSON.parse(textOf(result));
+      const { args } = echoed(result);
       expect(args).toEqual(["--no-pager", "status"]);
     });
   });
@@ -80,7 +76,7 @@ describe.concurrent("git tool (unit)", () => {
 
     it("prepends -C for valid worktree cwd", async ({ expect }) => {
       const result = await callMocked(["status"], toplevel);
-      const { args } = JSON.parse(textOf(result));
+      const { args } = echoed(result);
       expect(args[0]).toBe("--no-pager");
       expect(args[1]).toBe("-C");
       expect(args[2]).toBe(toplevel);
@@ -89,7 +85,7 @@ describe.concurrent("git tool (unit)", () => {
 
     it("omits -C when cwd is not provided", async ({ expect }) => {
       const result = await callMocked(["status"]);
-      const { args } = JSON.parse(textOf(result));
+      const { args } = echoed(result);
       expect(args).toEqual(["--no-pager", "status"]);
     });
 
@@ -101,7 +97,7 @@ describe.concurrent("git tool (unit)", () => {
 
     it("accepts trailing slash (resolve normalizes it)", async ({ expect }) => {
       const result = await callMocked(["status"], toplevel + "/");
-      const { args } = JSON.parse(textOf(result));
+      const { args } = echoed(result);
       expect(args[1]).toBe("-C");
     });
 
@@ -119,7 +115,7 @@ describe.concurrent("git tool (unit)", () => {
           (first === first.toUpperCase() ? first.toLowerCase() : first.toUpperCase()) +
           toplevel.slice(1);
         const result = await callMocked(["status"], swapped);
-        const { args } = JSON.parse(textOf(result));
+        const { args } = echoed(result);
         expect(args[1]).toBe("-C");
       },
     );
@@ -128,7 +124,7 @@ describe.concurrent("git tool (unit)", () => {
       "accepts forward-slash cwd on Windows",
       async ({ expect }) => {
         const result = await callMocked(["status"], toplevel.replace(/\\/g, "/"));
-        const { args } = JSON.parse(textOf(result));
+        const { args } = echoed(result);
         expect(args[1]).toBe("-C");
       },
     );

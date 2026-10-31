@@ -4,12 +4,8 @@ import * as build from "./builders.ts";
 import { connectTool, startServer, assertBlocked, assertNotBlocked, textOf } from "./helpers.ts";
 
 // --- Unit tests (mocked execShell) ---
-vi.mock("../lib/exec.ts", () => ({
-  execShell: async (_cmd: string, args: readonly string[]) => ({
-    content: [{ type: "text", text: JSON.stringify(args) }],
-  }),
-  fail: (msg: string) => ({ content: [{ type: "text", text: msg }], isError: true }),
-}));
+vi.mock("../lib/exec.ts", async (importOriginal) =>
+  (await import("./helpers.ts")).withEchoExec(importOriginal));
 
 const { register } = await import("../tools/pnpm.ts");
 

@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 import { createInterface } from "node:readline";
 import type { ExpectStatic } from "vitest";
 import { z } from "zod";
+import type * as ExecModule from "../lib/exec.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SERVER_PATH = join(__dirname, "..", "index.ts");
@@ -122,6 +123,39 @@ export const connectTool = async (register: (server: McpServer) => unknown) => {
   return async (args: Record<string, unknown>): Promise<CallToolResult> =>
     remember(args, CallToolResultSchema.parse(await client.callTool({ name: tool.name, arguments: args })));
 };
+
+const EchoSchema = z.object({ args: z.array(z.string()).readonly(), cmd: z.string() });
+
+/*
+ * Stands in for exec and execShell in unit tests. It runs nothing and answers
+ * with the command it was handed, so each test reads what its own call would
+ * have run from its own result rather than from a call log that concurrent
+ * tests share.
+ */
+const echoExec = async (cmd: string, args: readonly string[]): Promise<CallToolResult> => ({
+  content: [{ type: "text", text: JSON.stringify({ args, cmd } satisfies z.input<typeof EchoSchema>) }],
+});
+
+/**
+ * A `vi.mock` factory for `lib/exec.ts` that keeps the real module but
+ * replaces both runners with `echoExec`, so a tool reaching for either one
+ * spawns nothing:
+ *
+ * ```ts
+ * vi.mock("../lib/exec.ts", async (importOriginal) =>
+ *   (await import("./helpers.ts")).withEchoExec(importOriginal));
+ * ```
+ *
+ * The factory is hoisted above the file's imports, hence the dynamic import.
+ */
+export const withEchoExec = async (importOriginal: <T>() => Promise<T>) => ({
+  ...(await importOriginal<typeof ExecModule>()),
+  exec: echoExec,
+  execShell: echoExec,
+});
+
+/** The command an `echoExec` result says the tool would have run. */
+export const echoed = (result: CallToolResult) => EchoSchema.parse(JSON.parse(textOf(result)));
 
 /** The text of a result's first content item, which must be text. */
 export const textOf = (result: CallToolResult | null): string => {

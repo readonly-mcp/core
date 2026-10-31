@@ -2,15 +2,11 @@ import { faker } from "@faker-js/faker";
 import { describe, it, beforeAll, afterAll, vi, type ExpectStatic } from "vitest";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import * as build from "./builders.ts";
-import { connectTool, startServer, assertBlocked, assertNotBlocked, textOf } from "./helpers.ts";
+import { connectTool, startServer, assertBlocked, assertNotBlocked, textOf, echoed } from "./helpers.ts";
 
 // --- Unit tests (mocked execShell) ---
-vi.mock("../lib/exec.ts", () => ({
-  execShell: async (_cmd: string, args: readonly string[]) => ({
-    content: [{ type: "text", text: JSON.stringify({ cmd: _cmd, args }) }],
-  }),
-  fail: (msg: string) => ({ content: [{ type: "text", text: msg }], isError: true }),
-}));
+vi.mock("../lib/exec.ts", async (importOriginal) =>
+  (await import("./helpers.ts")).withEchoExec(importOriginal));
 
 const { register } = await import("../tools/npm.ts");
 
@@ -34,13 +30,13 @@ describe.concurrent("npm tool (unit)", () => {
   describe("--ignore-scripts injection", () => {
     it("injects --ignore-scripts as first arg", async ({ expect }) => {
       const result = await callMocked(["ls"]);
-      const { args } = JSON.parse(textOf(result));
+      const { args } = echoed(result);
       expect(args[0]).toBe("--ignore-scripts");
     });
 
     it("prepends --ignore-scripts before subcommand", async ({ expect }) => {
       const result = await callMocked(["view", "zod"]);
-      const { args } = JSON.parse(textOf(result));
+      const { args } = echoed(result);
       expect(args).toEqual(["--ignore-scripts", "view", "zod"]);
     });
   });

@@ -1,15 +1,11 @@
 import { describe, it, beforeAll, afterAll, vi, type ExpectStatic } from "vitest";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import * as build from "./builders.ts";
-import { connectTool, startServer, assertBlocked, textOf } from "./helpers.ts";
+import { connectTool, startServer, assertBlocked, textOf, echoed } from "./helpers.ts";
 
 // --- Unit tests (mocked exec) ---
-vi.mock("../lib/exec.ts", () => ({
-  exec: async (_cmd: string, args: readonly string[]) => ({
-    content: [{ type: "text", text: JSON.stringify(args) }],
-  }),
-  fail: (msg: string) => ({ content: [{ type: "text", text: msg }], isError: true }),
-}));
+vi.mock("../lib/exec.ts", async (importOriginal) =>
+  (await import("./helpers.ts")).withEchoExec(importOriginal));
 
 const { register } = await import("../tools/tea.ts");
 
@@ -20,8 +16,6 @@ const callMocked = (args: readonly string[]) => callTool({ args });
 const assertAllowed = (expect: ExpectStatic, result: CallToolResult) => {
   expect(result.isError, `expected allowed, got: ${textOf(result)}`).toBeFalsy();
 };
-
-const execArgs = (result: CallToolResult) => JSON.parse(textOf(result));
 
 describe.concurrent("tea tool (unit)", () => {
   describe("allowed subcommands", () => {
@@ -78,7 +72,7 @@ describe.concurrent("tea tool (unit)", () => {
       return { args: args.map(fill), expected: expected.map(fill), name: args.join(" ") };
     }))(
       "runs $name under its canonical names", async ({ args, expected }, { expect }) => {
-        expect(execArgs(await callMocked(args))).toEqual(expected);
+        expect(echoed(await callMocked(args)).args).toEqual(expected);
       },
     );
   });
@@ -171,7 +165,7 @@ describe.concurrent("tea tool (unit)", () => {
 
     it("injects --method GET immediately after the endpoint", async ({ expect }) => {
       const endpoint = build.template("repos/:owner/:repo/pulls/:number/reviews");
-      const args = execArgs(await callMocked(["api", endpoint, "--", "-i"]));
+      const { args } = echoed(await callMocked(["api", endpoint, "--", "-i"]));
       expect(args.slice(0, 4)).toEqual(["api", endpoint, "--method", "GET"]);
     });
 
