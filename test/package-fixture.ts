@@ -8,15 +8,15 @@
  * timeout. A project holding one dependency keeps their cost flat.
  */
 
-import { execFile } from "node:child_process";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import { createRequire } from "node:module";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { promisify } from "node:util";
-import { it } from "vitest";
-import { z } from "zod";
-import { startServer } from "./helpers.ts";
+import { execFile } from 'node:child_process';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { promisify } from 'node:util';
+import { it } from 'vitest';
+import { z } from 'zod';
+import { startServer } from './helpers.ts';
 
 const run = promisify(execFile);
 
@@ -27,7 +27,7 @@ const require = createRequire(import.meta.url);
  * the version this repository resolved, so the install is reproducible and a
  * package manager whose cache already holds it skips the download.
  */
-const dependency = "zod";
+const dependency = 'zod';
 const { version } = z.object({ version: z.string() }).parse(require(`${dependency}/package.json`));
 
 /*
@@ -35,8 +35,8 @@ const { version } = z.object({ version: z.string() }).parse(require(`${dependenc
  * lockfile. The audit and funding requests fetch reports no test reads.
  */
 const installArgs = {
-  npm: ["install", "--no-audit", "--no-fund"],
-  pnpm: ["install", "--no-frozen-lockfile"],
+  npm: ['install', '--no-audit', '--no-fund'],
+  pnpm: ['install', '--no-frozen-lockfile'],
 } satisfies Record<string, readonly string[]>;
 
 /*
@@ -45,7 +45,7 @@ const installArgs = {
  * that would concatenate the arguments.
  */
 const shimmed = (cmd: string, args: readonly string[]): [string, string[]] =>
-  process.platform === "win32" ? ["bash", ["-c", 'exec "$@"', "--", cmd, ...args]] : [cmd, [...args]];
+  process.platform === 'win32' ? ['bash', ['-c', 'exec "$@"', '--', cmd, ...args]] : [cmd, [...args]];
 
 export type PackageManager = keyof typeof installArgs;
 
@@ -61,8 +61,8 @@ export const createPackageFixture = async (manager: PackageManager): Promise<Pac
     [Symbol.asyncDispose]: () => rm(dir, { force: true, maxRetries: 3, recursive: true }),
   };
   try {
-    const manifest = { name: "fixture", private: true, dependencies: { [dependency]: version } };
-    await writeFile(join(dir, "package.json"), JSON.stringify(manifest));
+    const manifest = { name: 'fixture', private: true, dependencies: { [dependency]: version } };
+    await writeFile(join(dir, 'package.json'), JSON.stringify(manifest));
     await run(...shimmed(manager, installArgs[manager]), { cwd: dir });
     return fixture;
   } catch (error) {
@@ -95,5 +95,5 @@ export const itWithPackageServer = (manager: PackageManager) =>
       } finally {
         await server.close();
       }
-    }, { scope: "file" }],
+    }, { scope: 'file' }],
   });

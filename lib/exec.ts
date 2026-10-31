@@ -1,7 +1,7 @@
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { z } from "zod";
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { z } from 'zod';
 
 const run = promisify(execFile);
 
@@ -17,14 +17,14 @@ export const MAX_BUFFER = 2 * 1024 * 1024;
 
 const EXEC_OPTS = { timeout: TIMEOUT_MS, maxBuffer: MAX_BUFFER };
 
-const IS_WIN = process.platform === "win32";
+const IS_WIN = process.platform === 'win32';
 
 export const text = (stdout: string, stderr: string): CallToolResult => ({
-  content: [{ type: "text", text: (stdout + stderr).trimEnd() || "(no output)" }],
+  content: [{ type: 'text', text: (stdout + stderr).trimEnd() || '(no output)' }],
 });
 
 export const fail = (msg: string): CallToolResult => ({
-  content: [{ type: "text", text: msg }],
+  content: [{ type: 'text', text: msg }],
   isError: true,
 });
 
@@ -55,12 +55,12 @@ const ExecErrorSchema = z.object({
 export const errorResult = (err: unknown, cmd: string, args: readonly string[]): CallToolResult => {
   const parsed = ExecErrorSchema.safeParse(err);
   if (!parsed.success) return fail(String(err));
-  const { code, killed, message, stderr = "", stdout = "" } = parsed.data;
+  const { code, killed, message, stderr = '', stdout = '' } = parsed.data;
   const partial = stdout + stderr;
-  if (code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER")
-    return fail(append(`Command output exceeded ${MAX_BUFFER} bytes: ${cmd} ${args.join(" ")}`, partial));
+  if (code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER')
+    return fail(append(`Command output exceeded ${MAX_BUFFER} bytes: ${cmd} ${args.join(' ')}`, partial));
   if (killed)
-    return fail(append(`Command timed out after ${TIMEOUT_MS / 1000}s: ${cmd} ${args.join(" ")}`, partial));
+    return fail(append(`Command timed out after ${TIMEOUT_MS / 1000}s: ${cmd} ${args.join(' ')}`, partial));
   if (partial) return text(stdout, stderr);
   return fail(message);
 };
@@ -76,5 +76,5 @@ export const exec = async (cmd: string, args: readonly string[]): Promise<CallTo
 
 export const execShell = async (cmd: string, args: readonly string[]): Promise<CallToolResult> => {
   if (!IS_WIN) return exec(cmd, args);
-  return exec("bash", ["-c", 'exec "$@"', "--", cmd, ...args]);
+  return exec('bash', ['-c', 'exec "$@"', '--', cmd, ...args]);
 };

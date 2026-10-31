@@ -4,20 +4,20 @@
  * Spawns the MCP server as a child process and communicates over JSON-RPC/stdio.
  */
 
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { CallToolResultSchema, type CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { spawn } from "node:child_process";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-import { createInterface } from "node:readline";
-import type { ExpectStatic } from "vitest";
-import { z } from "zod";
-import type * as ExecModule from "../lib/exec.ts";
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { CallToolResultSchema, type CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { spawn } from 'node:child_process';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createInterface } from 'node:readline';
+import type { ExpectStatic } from 'vitest';
+import { z } from 'zod';
+import type * as ExecModule from '../lib/exec.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const SERVER_PATH = join(__dirname, "..", "index.ts");
+const SERVER_PATH = join(__dirname, '..', 'index.ts');
 
 const ResponseSchema = z.object({
   error: z.object({ message: z.string() }).optional(),
@@ -44,8 +44,8 @@ const describeRequest = (result: CallToolResult): string =>
 
 /** Spawns the server in `cwd`, the directory its tools run commands in. */
 export const startServer = ({ cwd = process.cwd() }: { readonly cwd?: string } = {}) => {
-  const proc = spawn("node", [SERVER_PATH], {
-    stdio: ["pipe", "pipe", "pipe"],
+  const proc = spawn('node', [SERVER_PATH], {
+    stdio: ['pipe', 'pipe', 'pipe'],
     cwd,
   });
 
@@ -54,7 +54,7 @@ export const startServer = ({ cwd = process.cwd() }: { readonly cwd?: string } =
   const timers = new Map<number, NodeJS.Timeout>();
   let nextId = 1;
 
-  rl.on("line", (line) => {
+  rl.on('line', (line) => {
     try {
       const parsed = ResponseSchema.safeParse(JSON.parse(line));
       if (!parsed.success) return;
@@ -73,8 +73,8 @@ export const startServer = ({ cwd = process.cwd() }: { readonly cwd?: string } =
     new Promise<Response>((resolve, reject) => {
       const id = nextId++;
       pending.set(id, resolve);
-      const msg = JSON.stringify({ jsonrpc: "2.0", id, method, params });
-      proc.stdin.write(msg + "\n");
+      const msg = JSON.stringify({ jsonrpc: '2.0', id, method, params });
+      proc.stdin.write(msg + '\n');
       timers.set(id, setTimeout(() => {
         timers.delete(id);
         if (pending.has(id)) {
@@ -85,20 +85,20 @@ export const startServer = ({ cwd = process.cwd() }: { readonly cwd?: string } =
     });
 
   const initialize = () =>
-    send("initialize", {
-      protocolVersion: "2024-11-05",
+    send('initialize', {
+      protocolVersion: '2024-11-05',
       capabilities: {},
-      clientInfo: { name: "test", version: "1.0.0" },
+      clientInfo: { name: 'test', version: '1.0.0' },
     });
 
   const callTool = async (name: string, args: unknown): Promise<CallToolResult> => {
-    const resp = await send("tools/call", { name, arguments: args });
-    if (resp.error) return remember(args, { isError: true, content: [{ type: "text", text: resp.error.message }] });
+    const resp = await send('tools/call', { name, arguments: args });
+    if (resp.error) return remember(args, { isError: true, content: [{ type: 'text', text: resp.error.message }] });
     return remember(args, CallToolResultSchema.parse(resp.result));
   };
 
   // Subscribed at spawn so an exit before close still resolves it.
-  const exited = new Promise<void>(resolve => proc.once("exit", () => resolve()));
+  const exited = new Promise<void>(resolve => proc.once('exit', () => resolve()));
 
   /*
    * Resolves once the process has exited: Windows refuses to delete a
@@ -120,15 +120,15 @@ export const startServer = ({ cwd = process.cwd() }: { readonly cwd?: string } =
  * the protocol and the tool's input schema.
  */
 export const connectTool = async (register: (server: McpServer) => unknown) => {
-  const server = new McpServer({ name: "test", version: "0.0.0" });
+  const server = new McpServer({ name: 'test', version: '0.0.0' });
   register(server);
-  const client = new Client({ name: "test", version: "0.0.0" });
+  const client = new Client({ name: 'test', version: '0.0.0' });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
   const { tools } = await client.listTools();
   const [tool, ...others] = tools;
   if (tool === undefined || others.length > 0)
-    throw new Error(`Expected one registered tool, got: ${tools.map((t) => t.name).join(", ")}`);
+    throw new Error(`Expected one registered tool, got: ${tools.map((t) => t.name).join(', ')}`);
   return async (args: Record<string, unknown>): Promise<CallToolResult> =>
     remember(args, CallToolResultSchema.parse(await client.callTool({ name: tool.name, arguments: args })));
 };
@@ -142,7 +142,7 @@ const EchoSchema = z.object({ args: z.array(z.string()).readonly(), cmd: z.strin
  * tests share.
  */
 const echoExec = async (cmd: string, args: readonly string[]): Promise<CallToolResult> => ({
-  content: [{ type: "text", text: JSON.stringify({ args, cmd } satisfies z.input<typeof EchoSchema>) }],
+  content: [{ type: 'text', text: JSON.stringify({ args, cmd } satisfies z.input<typeof EchoSchema>) }],
 });
 
 /**
@@ -169,13 +169,13 @@ export const echoed = (result: CallToolResult) => EchoSchema.parse(JSON.parse(te
 /** The text of a result's first content item, which must be text. */
 export const textOf = (result: CallToolResult | null): string => {
   const first = result?.content[0];
-  if (first?.type !== "text")
+  if (first?.type !== 'text')
     throw new Error(`Expected a text content item, got: ${JSON.stringify(result)}`);
   return first.text;
 };
 
 export const assertBlocked = (expect: ExpectStatic, result: CallToolResult, message = `expected blocked, ${describeRequest(result)}`) => {
-  expect(result.isError || textOf(result).includes("not allowed"), message).toBe(true);
+  expect(result.isError || textOf(result).includes('not allowed'), message).toBe(true);
 };
 
 export const assertNotBlocked = (expect: ExpectStatic, result: CallToolResult, message = `expected not blocked, ${describeRequest(result)}`) => {

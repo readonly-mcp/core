@@ -1,39 +1,39 @@
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { exec, fail } from "../lib/exec.ts";
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { exec, fail } from '../lib/exec.ts';
 import {
   ArgsSchema, rejectSubcommand, rejectBlockedFlags,
   matchesApiPath, rejectApiEndpoint, normalizeApiPath,
-} from "../lib/allowlist.ts";
+} from '../lib/allowlist.ts';
 
-const GLOBAL_FLAGS = new Set(["--help", "--version", "-h", "-v"]);
+const GLOBAL_FLAGS = new Set(['--help', '--version', '-h', '-v']);
 
 // Aliases from `tea <noun> --help` (tea 0.16.0). Only nouns and verbs with an
 // allowed command are listed: anything else stays unresolved and is rejected,
 // so a missing alias fails closed.
 const NOUN_ALIASES: Record<string, readonly string[]> = {
-  branches: ["b", "branch"],
-  comments: ["c", "comment"],
-  issues: ["i", "issue"],
-  labels: ["label"],
-  logins: ["login"],
-  milestones: ["milestone", "ms"],
-  pulls: ["pr", "pull"],
-  releases: ["r", "release"],
-  repos: ["repo"],
+  branches: ['b', 'branch'],
+  comments: ['c', 'comment'],
+  issues: ['i', 'issue'],
+  labels: ['label'],
+  logins: ['login'],
+  milestones: ['milestone', 'ms'],
+  pulls: ['pr', 'pull'],
+  releases: ['r', 'release'],
+  repos: ['repo'],
   whoami: [],
 };
 
 const VERB_ALIASES: Record<string, Record<string, readonly string[]>> = {
-  branches: { list: ["ls"] },
-  comments: { list: ["ls"] },
-  issues: { list: ["ls"] },
-  labels: { list: ["ls"] },
-  logins: { list: ["ls"] },
-  milestones: { issues: ["i"], list: ["ls"] },
-  pulls: { list: ["ls"], "review-comments": ["rc"] },
-  releases: { list: ["ls"] },
-  repos: { list: ["ls"], search: ["s"] },
+  branches: { list: ['ls'] },
+  comments: { list: ['ls'] },
+  issues: { list: ['ls'] },
+  labels: { list: ['ls'] },
+  logins: { list: ['ls'] },
+  milestones: { issues: ['i'], list: ['ls'] },
+  pulls: { list: ['ls'], 'review-comments': ['rc'] },
+  releases: { list: ['ls'] },
+  repos: { list: ['ls'], search: ['s'] },
   whoami: {},
 };
 
@@ -49,16 +49,16 @@ const VERBS = Object.fromEntries(
 
 // Commands whose children are all excluded, so the remaining args are free.
 const LEAVES = new Set([
-  "branches list",
-  "comments list",
-  "issues list",
-  "labels list",
-  "logins list",
-  "milestones list",
-  "pulls list", "pulls review-comments",
-  "releases list",
-  "repos list", "repos search",
-  "whoami",
+  'branches list',
+  'comments list',
+  'issues list',
+  'labels list',
+  'logins list',
+  'milestones list',
+  'pulls list', 'pulls review-comments',
+  'releases list',
+  'repos list', 'repos search',
+  'whoami',
 ]);
 
 // Commands that act without a verb but also have children (`tea pulls 2`
@@ -66,8 +66,8 @@ const LEAVES = new Set([
 // naming a child, even after flags, so these accept only flags whose arity is
 // known and check every positional. Flags from `tea <command> --help`.
 const SHARED_VALUE_FLAGS = [
-  "f", "fields", "l", "limit", "lm", "login", "o", "output", "p", "page",
-  "R", "r", "remote", "repo", "state",
+  'f', 'fields', 'l', 'limit', 'lm', 'login', 'o', 'output', 'p', 'page',
+  'R', 'r', 'remote', 'repo', 'state',
 ];
 
 type BarePolicy = {
@@ -78,21 +78,21 @@ type BarePolicy = {
 
 const BARE: Record<string, BarePolicy> = {
   issues: {
-    booleans: new Set(["comments", "h", "help"]),
+    booleans: new Set(['comments', 'h', 'help']),
     positional: (arg) => /^\d+$/.test(arg),
     values: new Set([
       ...SHARED_VALUE_FLAGS,
-      "A", "a", "assignee", "author", "F", "from", "K", "k", "keyword", "kind",
-      "L", "labels", "M", "m", "mentions", "milestones", "org", "owner", "u", "until",
+      'A', 'a', 'assignee', 'author', 'F', 'from', 'K', 'k', 'keyword', 'kind',
+      'L', 'labels', 'M', 'm', 'mentions', 'milestones', 'org', 'owner', 'u', 'until',
     ]),
   },
-  "milestones issues": {
-    booleans: new Set(["h", "help"]),
-    positional: (arg) => !["a", "add", "r", "remove"].includes(arg),
-    values: new Set([...SHARED_VALUE_FLAGS, "kind"]),
+  'milestones issues': {
+    booleans: new Set(['h', 'help']),
+    positional: (arg) => !['a', 'add', 'r', 'remove'].includes(arg),
+    values: new Set([...SHARED_VALUE_FLAGS, 'kind']),
   },
   pulls: {
-    booleans: new Set(["comments", "h", "help"]),
+    booleans: new Set(['comments', 'h', 'help']),
     positional: (arg) => /^\d+$/.test(arg),
     values: new Set(SHARED_VALUE_FLAGS),
   },
@@ -101,17 +101,17 @@ const BARE: Record<string, BarePolicy> = {
 // tea (urfave/cli) treats `-name` and `--name` alike, so `-debug` must be
 // caught as `--debug`. Single-dash forms are lengthened for the prefix
 // matcher; single-letter flags already match as short flags.
-const toLongForm = (arg: string): string => /^-[^-][^=]/.test(arg) ? "-" + arg : arg;
+const toLongForm = (arg: string): string => /^-[^-][^=]/.test(arg) ? '-' + arg : arg;
 
-const flagName = (arg: string): string => arg.replace(/^--?/, "").split("=")[0] ?? "";
+const flagName = (arg: string): string => arg.replace(/^--?/, '').split('=')[0] ?? '';
 
-const isFlag = (arg: string): boolean => arg.startsWith("-") && arg !== "-" && arg !== "--";
+const isFlag = (arg: string): boolean => arg.startsWith('-') && arg !== '-' && arg !== '--';
 
 // --debug / --vvv: may print the Authorization header, like gh --verbose.
-const BLOCKED_FLAGS = new Set(["--debug", "--vvv"]);
+const BLOCKED_FLAGS = new Set(['--debug', '--vvv']);
 
 // labels --save / -s: writes the label set to a file.
-const NOUN_BLOCKED_FLAGS: Record<string, ReadonlySet<string>> = { labels: new Set(["--save", "-s"]) };
+const NOUN_BLOCKED_FLAGS: Record<string, ReadonlySet<string>> = { labels: new Set(['--save', '-s']) };
 
 const rejectFlags = (args: readonly string[], blocked: ReadonlySet<string>): CallToolResult | null =>
   rejectBlockedFlags(args, blocked) ??
@@ -122,12 +122,12 @@ const rejectFlags = (args: readonly string[], blocked: ReadonlySet<string>): Cal
 // pass; `.` and `..` segments are paths, not names.
 const isRepoSlug = (value: string): boolean =>
   /^[\w.-]+\/[\w.-]+$/.test(value) &&
-  value.split("/").every((segment) => !/^\.+$/.test(segment));
+  value.split('/').every((segment) => !/^\.+$/.test(segment));
 
 const repoValues = (args: readonly string[]): string[] => args.flatMap((arg, i) => {
-  if (!isFlag(arg) || !["r", "repo"].includes(flagName(arg))) return [];
-  const eq = arg.indexOf("=");
-  return [eq === -1 ? args[i + 1] ?? "" : arg.slice(eq + 1)];
+  if (!isFlag(arg) || !['r', 'repo'].includes(flagName(arg))) return [];
+  const eq = arg.indexOf('=');
+  return [eq === -1 ? args[i + 1] ?? '' : arg.slice(eq + 1)];
 });
 
 const rejectRepoPath = (args: readonly string[]): CallToolResult | null => {
@@ -144,16 +144,16 @@ const rejectBareArgs = (args: readonly string[], { booleans, positional, values 
     const arg = args[i];
     if (arg === undefined) {
       if (positionals.length > 1)
-        return fail(`At most one positional argument allowed, got: ${positionals.join(" ")}`);
+        return fail(`At most one positional argument allowed, got: ${positionals.join(' ')}`);
       const invalid = positionals.find((p) => !positional(p));
       return invalid === undefined ? null : fail(`Positional argument not allowed: ${invalid}`);
     }
-    if (endOfOptions || !arg.startsWith("-") || arg === "-")
+    if (endOfOptions || !arg.startsWith('-') || arg === '-')
       return step(i + 1, [...positionals, arg], endOfOptions);
-    if (arg === "--") return step(i + 1, positionals, true);
+    if (arg === '--') return step(i + 1, positionals, true);
     const name = flagName(arg);
     if (booleans.has(name)) return step(i + 1, positionals, false);
-    if (values.has(name)) return step(i + (arg.includes("=") ? 1 : 2), positionals, false);
+    if (values.has(name)) return step(i + (arg.includes('=') ? 1 : 2), positionals, false);
     return fail(`Flag not allowed: ${arg}`);
   };
   return step(0, [], false);
@@ -174,19 +174,19 @@ const ALLOWED = new Set([...LEAVES, ...Object.keys(BARE)]);
 // tea substitutes {owner} and {repo} from the repository context; `*` already
 // matches them as literal segments.
 const API_PATHS = [
-  "repos/*/*/commits/*/status",
-  "repos/*/*/commits/*/statuses",
+  'repos/*/*/commits/*/status',
+  'repos/*/*/commits/*/statuses',
   // Bare = directory listing, ** = file or nested path. Files come back as
   // base64 in JSON; raw/** serves them as plain text, since Gitea and
   // Forgejo have no raw Accept media type.
-  "repos/*/*/contents",
-  "repos/*/*/contents/**",
-  "repos/*/*/pulls/*/reviews",
-  "repos/*/*/pulls/*/reviews/*/comments",
-  "repos/*/*/raw/**",
+  'repos/*/*/contents',
+  'repos/*/*/contents/**',
+  'repos/*/*/pulls/*/reviews',
+  'repos/*/*/pulls/*/reviews/*/comments',
+  'repos/*/*/raw/**',
   // Authenticated viewer identity. Single segment, so user/repos and the
   // like stay blocked.
-  "user",
+  'user',
 ];
 
 // --method / -X: overrides the GET injected below
@@ -195,11 +195,11 @@ const API_PATHS = [
 // --header / -H: arbitrary HTTP header injection
 // --output / -o: writes the response body to a path
 const API_BLOCKED_FLAGS = new Set([
-  "--data", "-d",
-  "--Field", "-F", "--field", "-f",
-  "--header", "-H",
-  "--method", "-X",
-  "--output", "-o",
+  '--data', '-d',
+  '--Field', '-F', '--field', '-f',
+  '--header', '-H',
+  '--method', '-X',
+  '--output', '-o',
 ]);
 
 // contents/** and raw/** accept any depth, so a `.` or `..` segment, plain or
@@ -221,13 +221,13 @@ const isPlainSegment = (segment: string): boolean => {
 // segment (repos/admin#/x/contents/y) would request a truncated endpoint the
 // allowlist never named.
 const isAllowedEndpoint = (endpoint: string): boolean =>
-  !endpoint.includes("#") &&
+  !endpoint.includes('#') &&
   matchesApiPath(endpoint, API_PATHS) &&
-  normalizeApiPath(endpoint).split("/").every(isPlainSegment);
+  normalizeApiPath(endpoint).split('/').every(isPlainSegment);
 
 const runApi = (args: readonly string[]): Promise<CallToolResult> | CallToolResult => {
   const endpoint = args[1];
-  if (!endpoint || endpoint.startsWith("-") || !isAllowedEndpoint(endpoint))
+  if (!endpoint || endpoint.startsWith('-') || !isAllowedEndpoint(endpoint))
     return rejectApiEndpoint(endpoint, API_PATHS);
   const rest = args.slice(2);
   const rejected =
@@ -237,19 +237,19 @@ const runApi = (args: readonly string[]): Promise<CallToolResult> | CallToolResu
   if (rejected) return rejected;
   // Inject --method GET immediately after the endpoint, before any
   // user-supplied flags, so a `--` in user args cannot turn it positional.
-  return exec("tea", ["api", endpoint, "--method", "GET", ...rest]);
+  return exec('tea', ['api', endpoint, '--method', 'GET', ...rest]);
 };
 
 export const register = (server: McpServer) =>
   server.tool(
-    "tea",
-    "Run read-only Gitea/Forgejo CLI commands (--version, --help, branches list, comments list, issues [index]/list, labels list, logins list, milestones issues/list, pulls [index]/list/review-comments, releases list, repos list/search, whoami, api GET: pulls/reviews, commits/status+statuses, contents, raw, user)",
+    'tea',
+    'Run read-only Gitea/Forgejo CLI commands (--version, --help, branches list, comments list, issues [index]/list, labels list, logins list, milestones issues/list, pulls [index]/list/review-comments, releases list, repos list/search, whoami, api GET: pulls/reviews, commits/status+statuses, contents, raw, user)',
     ArgsSchema,
     async ({ args }) => {
       const [only, ...others] = args;
       const isGlobal = only !== undefined && others.length === 0 && GLOBAL_FLAGS.has(only);
-      if (isGlobal) return exec("tea", args);
-      if (args[0] === "api") return runApi(args);
+      if (isGlobal) return exec('tea', args);
+      if (args[0] === 'api') return runApi(args);
 
       const resolved = resolve(args);
       if (!resolved || !ALLOWED.has(resolved.key))
@@ -264,6 +264,6 @@ export const register = (server: McpServer) =>
       if (rejected) return rejected;
 
       // Run under canonical names so what executes is what was validated.
-      return exec("tea", [...command, ...rest]);
+      return exec('tea', [...command, ...rest]);
     },
   );

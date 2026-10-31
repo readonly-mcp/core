@@ -1,26 +1,26 @@
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { exec } from "../lib/exec.ts";
-import { ArgsSchema, matchesAllowlist, rejectSubcommand } from "../lib/allowlist.ts";
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { exec } from '../lib/exec.ts';
+import { ArgsSchema, matchesAllowlist, rejectSubcommand } from '../lib/allowlist.ts';
 
 const SUBCOMMANDS = new Set([
-  "jira board list",
-  "jira filter list",
-  "jira project list",
-  "jira sprint list",
-  "jira workitem comment list",
-  "jira workitem list",
-  "jira workitem search",
-  "jira workitem view",
+  'jira board list',
+  'jira filter list',
+  'jira project list',
+  'jira sprint list',
+  'jira workitem comment list',
+  'jira workitem list',
+  'jira workitem search',
+  'jira workitem view',
 ]);
 
 export const register = (server: McpServer) =>
   server.tool(
-    "acli",
-    "Run read-only Atlassian CLI commands (jira board/filter/project/sprint/workitem list/search/view/comment list)",
+    'acli',
+    'Run read-only Atlassian CLI commands (jira board/filter/project/sprint/workitem list/search/view/comment list)',
     ArgsSchema,
     async ({ args }) => {
       if (!matchesAllowlist(args, SUBCOMMANDS))
         return rejectSubcommand(args, SUBCOMMANDS);
-      return exec("acli", args);
+      return exec('acli', args);
     },
   );

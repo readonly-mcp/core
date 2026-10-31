@@ -1,20 +1,20 @@
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { exec } from "../lib/exec.ts";
-import { ArgsSchema, matchesAllowlist, rejectSubcommand } from "../lib/allowlist.ts";
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { exec } from '../lib/exec.ts';
+import { ArgsSchema, matchesAllowlist, rejectSubcommand } from '../lib/allowlist.ts';
 
 const SUBCOMMANDS = new Set([
-  "diff", "doctor", "managed",
-  "source-path", "status", "target-path", "verify",
+  'diff', 'doctor', 'managed',
+  'source-path', 'status', 'target-path', 'verify',
 ]);
 
 export const register = (server: McpServer) =>
   server.tool(
-    "chezmoi",
-    "Run read-only chezmoi commands (diff, doctor, managed, source-path, status, target-path, verify)",
+    'chezmoi',
+    'Run read-only chezmoi commands (diff, doctor, managed, source-path, status, target-path, verify)',
     ArgsSchema,
     async ({ args }) => {
       if (!matchesAllowlist(args, SUBCOMMANDS))
         return rejectSubcommand(args, SUBCOMMANDS);
-      return exec("chezmoi", args);
+      return exec('chezmoi', args);
     },
   );
