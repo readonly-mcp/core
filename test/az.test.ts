@@ -127,7 +127,7 @@ describe.concurrent('az tool (integration)', () => {
         ['pipelines', 'folder', 'create'],
         ['pipelines', 'folder', 'delete'],
         ['pipelines', 'folder', 'update'],
-      ].map(args => ({ name: args.join(' '), args }))
+      ].map(args => ({ name: args.join(' '), args })),
     )('blocks $name', async ({ args }, { expect }) => {
       assertBlocked(expect, await call(args));
     });
@@ -142,7 +142,7 @@ describe.concurrent('az tool (integration)', () => {
         { flags: [`--in-file=${build.fileName('json')}`], name: '--in-file=<file>' },
         { flags: ['--out-file', build.fileName('json')], name: '--out-file <file>' },
         { flags: [`--out-file=${build.fileName('json')}`], name: '--out-file=<file>' },
-      ]
+      ],
     )('blocks devops invoke $name', async ({ flags }, { expect }) => {
       assertBlocked(expect, await call(['devops', 'invoke', ...flags, '--area', 'build', '--resource', 'builds']));
     });
@@ -158,7 +158,7 @@ describe.concurrent('az tool (integration)', () => {
         ['devops', 'invoke'],
         ['devops', 'invoke', '--area', 'build'],
         ['devops', 'invoke', '--resource', 'builds'],
-      ].map(args => ({ name: args.slice(2).join(' ') || '(bare)', args }))
+      ].map(args => ({ name: args.slice(2).join(' ') || '(bare)', args })),
     )('blocks devops invoke endpoint $name', async ({ args }, { expect }) => {
       assertBlocked(expect, await call(args));
     });
@@ -220,7 +220,7 @@ describe.concurrent('az tool (integration)', () => {
       [
         ['devops', 'invoke', '--area', 'build', '--resource', 'builds', '--area', 'security'],
         ['devops', 'invoke', '--area', 'build', '--resource', 'builds', '--resource', 'permissions'],
-      ].map(args => ({ name: args.slice(2).join(' '), args }))
+      ].map(args => ({ name: args.slice(2).join(' '), args })),
     )('blocks duplicate flag $name', async ({ args }, { expect }) => {
       assertBlocked(expect, await call(args));
     });

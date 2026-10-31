@@ -53,7 +53,7 @@ describe.concurrent('npm tool (integration)', { timeout: packageServerTimeout },
         ['install'], ['ci'], ['update'], ['uninstall', 'lodash'],
         ['run', 'build'], ['exec', 'tsc'], ['publish'], ['init'],
         ['link'], ['pack'], ['prune'], ['rebuild'], ['dedupe'],
-      ].map(args => ({ name: args.join(' '), args }))
+      ].map(args => ({ name: args.join(' '), args })),
     )('blocks $name', async ({ args }, { expect, server }) => {
       assertBlocked(expect, await server.callTool('npm', { args }));
     });

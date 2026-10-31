@@ -75,7 +75,7 @@ describe.concurrent('pnpm tool (integration)', { timeout: packageServerTimeout }
         ['update'], ['run', 'build'], ['exec', 'tsc'],
         ['publish'], ['init'], ['link'], ['unlink'],
         ['store', 'prune'], ['patch', 'lodash'],
-      ].map(args => ({ name: args.join(' '), args }))
+      ].map(args => ({ name: args.join(' '), args })),
     )('blocks $name', async ({ args }, { expect, server }) => {
       assertBlocked(expect, await server.callTool('pnpm', { args }));
     });

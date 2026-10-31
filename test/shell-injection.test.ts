@@ -39,7 +39,7 @@ describe.concurrent('shell injection', () => {
       ].map(t => ({
         label: t.map(a => a.replace('{f}', 'CANARY')).join(' '),
         template: t,
-      }))
+      })),
     )('prevents: git $label', async ({ label, template }, { expect }) => {
       const realArgs = template.map(a => a.replace('{f}', canaryFile));
       await server.callTool('git', { args: realArgs });
@@ -67,7 +67,7 @@ describe.concurrent('shell injection', () => {
       ].map(t => ({
         label: `${t.command} ${t.args.map(a => JSON.stringify(a.replace('{f}', 'CANARY'))).join(' ')}`,
         template: t,
-      }))
+      })),
     )('prevents: $label', async ({ label, template }, { expect }) => {
       const call = {
         command: template.command,

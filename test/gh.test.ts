@@ -302,7 +302,7 @@ describe.concurrent('gh tool (integration)', () => {
       ['project', 'create'], ['project', 'delete'], ['project', 'edit'],
       ['cache', 'delete'],
       ['ruleset', 'create'],
-    ].map(args => ({ name: args.join(' '), args }))
+    ].map(args => ({ name: args.join(' '), args })),
   )('blocks $name', async ({ args }, { expect }) => {
     assertBlocked(expect, await server.callTool('gh', { args }));
   });

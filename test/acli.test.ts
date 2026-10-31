@@ -54,7 +54,7 @@ describe.concurrent('acli tool (integration)', () => {
       ['jira', 'workitem', 'assign'],
       ['jira', 'workitem', 'transition'],
       ['jira', 'workitem', 'comment', 'create'],
-    ].map(args => ({ name: args.join(' '), args }))
+    ].map(args => ({ name: args.join(' '), args })),
   )('blocks $name', async ({ args }, { expect }) => {
     assertBlocked(expect, await server.callTool('acli', { args }));
   });

@@ -335,7 +335,7 @@ describe.concurrent('tea tool (integration)', () => {
       ['times', 'list'],
       ['webhooks', 'list'],
       ['wiki', 'list'],
-    ] as const).map(args => ({ name: args.join(' '), args: args.map(build.template) }))
+    ] as const).map(args => ({ name: args.join(' '), args: args.map(build.template) })),
   )('blocks $name', async ({ args }, { expect }) => {
     assertBlocked(expect, await server.callTool('tea', { args }));
   });

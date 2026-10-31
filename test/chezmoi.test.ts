@@ -41,7 +41,7 @@ describe.concurrent('chezmoi tool (integration)', () => {
       ['apply'], ['add'], ['data'], ['edit'], ['forget'], ['init'],
       ['remove'], ['re-add'], ['update'], ['destroy'], ['state', 'dump'],
       ['cat-config'],
-    ].map(args => ({ name: args.join(' '), args }))
+    ].map(args => ({ name: args.join(' '), args })),
   )('blocks $name', async ({ args }, { expect }) => {
     assertBlocked(expect, await server.callTool('chezmoi', { args }));
   });
