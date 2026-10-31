@@ -59,7 +59,7 @@ export const matchesApiPath = (endpoint: string | undefined, patterns: readonly 
   const segments = normalized.split('/');
   return patterns.some((pattern) => {
     const pSegments = pattern.split('/');
-    const last = pSegments[pSegments.length - 1];
+    const last = pSegments.at(-1);
     if (last === '**') {
       const prefix = pSegments.slice(0, -1);
       return segments.length > prefix.length &&
