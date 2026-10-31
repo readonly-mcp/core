@@ -42,10 +42,11 @@ const remember = (args: unknown, result: CallToolResult): CallToolResult => {
 const describeRequest = (result: CallToolResult): string =>
   `arguments: ${JSON.stringify(requests.get(result))}`;
 
-export const startServer = () => {
+/** Spawns the server in `cwd`, the directory its tools run commands in. */
+export const startServer = ({ cwd = process.cwd() }: { readonly cwd?: string } = {}) => {
   const proc = spawn("node", [SERVER_PATH], {
     stdio: ["pipe", "pipe", "pipe"],
-    cwd: process.cwd(),
+    cwd,
   });
 
   const rl = createInterface({ input: proc.stdout });
@@ -96,10 +97,18 @@ export const startServer = () => {
     return remember(args, CallToolResultSchema.parse(resp.result));
   };
 
-  const close = () => {
+  // Subscribed at spawn so an exit before close still resolves it.
+  const exited = new Promise<void>(resolve => proc.once("exit", () => resolve()));
+
+  /*
+   * Resolves once the process has exited: Windows refuses to delete a
+   * directory that a running process holds as its cwd.
+   */
+  const close = async () => {
     rl.close();
     proc.stdin.end();
     proc.kill();
+    await exited;
   };
 
   return { initialize, callTool, close };
