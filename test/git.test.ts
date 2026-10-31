@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, it, beforeAll, afterAll, vi, type ExpectStatic } from "vitest";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import * as build from "./builders.ts";
 import { connectTool, startServer, assertBlocked, assertNotBlocked, textOf } from "./helpers.ts";
 
 // --- Unit tests (mocked exec) ---
@@ -72,7 +73,7 @@ describe.concurrent("git tool (unit)", () => {
     }).toString().trim();
 
     it("rejects cwd that is not a known worktree", async ({ expect }) => {
-      const result = await callMocked(["status"], "/tmp/not-a-worktree");
+      const result = await callMocked(["status"], build.absolutePath());
       expect(result?.isError).toBe(true);
       expect(textOf(result)).toContain("cwd rejected");
     });
@@ -364,28 +365,28 @@ describe.concurrent("git tool (integration)", () => {
   describe("write-flag blocking", () => {
     it.for(["log", "diff", "show"])(
       "blocks %s --output=<path>", async (sub, { expect }) => {
-        assertBlocked(expect, await server.callTool("git", { args: [sub, "--output=/tmp/evil.txt"] }));
+        assertBlocked(expect, await server.callTool("git", { args: [sub, `--output=${build.absolutePath()}`] }));
       },
     );
 
     it("blocks log --output <path>", async ({ expect }) => {
-      assertBlocked(expect, await server.callTool("git", { args: ["log", "--output", "/tmp/evil.txt"] }));
+      assertBlocked(expect, await server.callTool("git", { args: ["log", "--output", build.absolutePath()] }));
     });
 
     it("blocks diff -o", async ({ expect }) => {
-      assertBlocked(expect, await server.callTool("git", { args: ["diff", "-o", "/tmp/evil.txt"] }));
+      assertBlocked(expect, await server.callTool("git", { args: ["diff", "-o", build.absolutePath()] }));
     });
 
     it("blocks diff -ofile.txt (no space)", async ({ expect }) => {
-      assertBlocked(expect, await server.callTool("git", { args: ["diff", "-ofile.txt"] }));
+      assertBlocked(expect, await server.callTool("git", { args: ["diff", `-o${build.fileName("txt")}`] }));
     });
 
     it("blocks diff -ao (combined short flags with -o)", async ({ expect }) => {
-      assertBlocked(expect, await server.callTool("git", { args: ["diff", "-ao", "/tmp/evil.txt"] }));
+      assertBlocked(expect, await server.callTool("git", { args: ["diff", "-ao", build.absolutePath()] }));
     });
 
     it("blocks diff -abo (combined short flags with -o at end)", async ({ expect }) => {
-      assertBlocked(expect, await server.callTool("git", { args: ["diff", "-abo", "/tmp/evil.txt"] }));
+      assertBlocked(expect, await server.callTool("git", { args: ["diff", "-abo", build.absolutePath()] }));
     });
 
     it("blocks diff --no-index", async ({ expect }) => {
@@ -401,7 +402,7 @@ describe.concurrent("git tool (integration)", () => {
 
   describe("cwd parameter", () => {
     it("rejects cwd that is not a known worktree", async ({ expect }) => {
-      assertBlocked(expect, await server.callTool("git", { args: ["status"], cwd: "/tmp/not-a-worktree" }));
+      assertBlocked(expect, await server.callTool("git", { args: ["status"], cwd: build.absolutePath() }));
     });
 
     it("accepts cwd that is the main worktree", async ({ expect }) => {
