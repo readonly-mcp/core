@@ -132,7 +132,7 @@ describe.concurrent('git tool (unit)', () => {
     it.runIf(process.platform === 'win32')(
       'accepts forward-slash cwd on Windows',
       async ({ expect }) => {
-        const result = await callMocked(['status'], toplevel.replace(/\\/g, '/'));
+        const result = await callMocked(['status'], toplevel.replaceAll('\\', '/'));
         const { args } = echoed(result);
 
         expect(args[1]).toBe('-C');

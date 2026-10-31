@@ -152,7 +152,7 @@ export const templateFiller = (): Filler => {
     values.set(key, value);
     return value;
   };
-  return template => template.replace(/:([a-z]+)/g, valueOf);
+  return template => template.replaceAll(/:([a-z]+)/g, valueOf);
 };
 
 /**

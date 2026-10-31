@@ -13,7 +13,7 @@ describe.concurrent('shell injection', () => {
     server = startServer();
     await server.initialize();
     tmpDir = await mkdtemp(join(tmpdir(), 'mcp-test-'));
-    canaryFile = join(tmpDir, 'canary.txt').replace(/\\/g, '/');
+    canaryFile = join(tmpDir, 'canary.txt').replaceAll('\\', '/');
     await writeFile(canaryFile, 'ORIGINAL', 'utf8');
   });
 
