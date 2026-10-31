@@ -18,10 +18,6 @@
     "lib/",
     "tools/"
   ],
-  "engines": {
-    "node": ">=18",
-    "pnpm": ">=10.16.0"
-  },
   "scripts": {
     "build": "pnpm run compile:ts && node scripts/stage-package.ts",
     "compile:ts": "tsc -p tsconfig.build.json",
@@ -43,11 +39,15 @@
     "typescript": "catalog:",
     "vitest": "catalog:"
   },
+  "packageManager": "pnpm@11.3.0",
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=10.16.0"
+  },
   "publishConfig": {
     "access": "public",
     "bin": {
       "readonly-mcp": "./index.js"
     }
-  },
-  "packageManager": "pnpm@11.3.0"
+  }
 }

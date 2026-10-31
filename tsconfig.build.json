@@ -6,5 +6,9 @@
     "rootDir": "."
   },
   "extends": "./tsconfig.json",
-  "include": ["index.ts", "lib/**/*", "tools/**/*"]
+  "include": [
+    "index.ts",
+    "lib/**/*",
+    "tools/**/*"
+  ]
 }
