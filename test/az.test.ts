@@ -1,5 +1,6 @@
 import { describe, it, beforeAll, afterAll, vi, type ExpectStatic } from "vitest";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import * as build from "./builders.ts";
 import { connectTool, startServer, assertBlocked, textOf } from "./helpers.ts";
 
 // --- Unit tests (mocked execShell) ---
@@ -36,7 +37,7 @@ describe.concurrent("az tool (unit)", () => {
     });
 
     it("allows pipelines build show", async ({ expect }) => {
-      assertAllowed(expect, await callMocked(["pipelines", "build", "show", "--id", "1"]));
+      assertAllowed(expect, await callMocked(["pipelines", "build", "show", "--id", build.resourceId()]));
     });
   });
 
@@ -58,7 +59,7 @@ describe.concurrent("az tool (unit)", () => {
     it("allows with extra safe flags", async ({ expect }) => {
       assertAllowed(expect, await callMocked(
         ["devops", "invoke", "--area", "build", "--resource", "builds",
-          "--route-parameters", "buildId=123", "--query-parameters", "api-version=7.0",
+          "--route-parameters", `buildId=${build.resourceId()}`, "--query-parameters", "api-version=7.0",
           "--output", "json"],
       ));
     });
@@ -141,15 +142,15 @@ describe.concurrent("az tool (integration)", () => {
   describe("blocked devops invoke flags", () => {
     it.for(
       [
-        ["devops", "invoke", "--http-method", "POST", "--area", "build", "--resource", "builds"],
-        ["devops", "invoke", "--http-method=DELETE", "--area", "build", "--resource", "builds"],
-        ["devops", "invoke", "--in-file", "payload.json", "--area", "build", "--resource", "builds"],
-        ["devops", "invoke", "--in-file=payload.json", "--area", "build", "--resource", "builds"],
-        ["devops", "invoke", "--out-file", "output.json", "--area", "build", "--resource", "builds"],
-        ["devops", "invoke", "--out-file=output.json", "--area", "build", "--resource", "builds"],
-      ].map(args => ({ name: args.slice(2).join(" "), args }))
-    )("blocks devops invoke $name", async ({ args }, { expect }) => {
-      assertBlocked(expect, await call(args));
+        { flags: ["--http-method", "POST"], name: "--http-method POST" },
+        { flags: ["--http-method=DELETE"], name: "--http-method=DELETE" },
+        { flags: ["--in-file", build.fileName("json")], name: "--in-file <file>" },
+        { flags: [`--in-file=${build.fileName("json")}`], name: "--in-file=<file>" },
+        { flags: ["--out-file", build.fileName("json")], name: "--out-file <file>" },
+        { flags: [`--out-file=${build.fileName("json")}`], name: "--out-file=<file>" },
+      ]
+    )("blocks devops invoke $name", async ({ flags }, { expect }) => {
+      assertBlocked(expect, await call(["devops", "invoke", ...flags, "--area", "build", "--resource", "builds"]));
     });
   });
 
@@ -179,8 +180,8 @@ describe.concurrent("az tool (integration)", () => {
     it.for([
       { name: "--http-m", args: ["devops", "invoke", "--http-m", "POST", "--area", "build", "--resource", "builds"] },
       { name: "--http-metho", args: ["devops", "invoke", "--http-metho", "PATCH", "--area", "build", "--resource", "builds"] },
-      { name: "--in-f", args: ["devops", "invoke", "--in-f", "payload.json", "--area", "build", "--resource", "builds"] },
-      { name: "--out-f", args: ["devops", "invoke", "--out-f", "out.json", "--area", "build", "--resource", "builds"] },
+      { name: "--in-f", args: ["devops", "invoke", "--in-f", build.fileName("json"), "--area", "build", "--resource", "builds"] },
+      { name: "--out-f", args: ["devops", "invoke", "--out-f", build.fileName("json"), "--area", "build", "--resource", "builds"] },
       { name: "--out", args: ["devops", "invoke", "--out", "json", "--area", "build", "--resource", "builds"] },
       { name: "--o", args: ["devops", "invoke", "--o", "json", "--area", "build", "--resource", "builds"] },
       { name: "--are", args: ["devops", "invoke", "--are", "build", "--resource", "builds"] },
