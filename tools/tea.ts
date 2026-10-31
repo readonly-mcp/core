@@ -31,7 +31,7 @@ const VERB_ALIASES: Record<string, Record<string, readonly string[]>> = {
   labels: { list: ['ls'] },
   logins: { list: ['ls'] },
   milestones: { issues: ['i'], list: ['ls'] },
-  pulls: { list: ['ls'], 'review-comments': ['rc'] },
+  pulls: { 'list': ['ls'], 'review-comments': ['rc'] },
   releases: { list: ['ls'] },
   repos: { list: ['ls'], search: ['s'] },
   whoami: {},
@@ -77,7 +77,7 @@ type BarePolicy = {
 };
 
 const BARE: Record<string, BarePolicy> = {
-  issues: {
+  'issues': {
     booleans: new Set(['comments', 'h', 'help']),
     positional: arg => /^\d+$/.test(arg),
     values: new Set([
@@ -91,7 +91,7 @@ const BARE: Record<string, BarePolicy> = {
     positional: arg => !['a', 'add', 'r', 'remove'].includes(arg),
     values: new Set([...SHARED_VALUE_FLAGS, 'kind']),
   },
-  pulls: {
+  'pulls': {
     booleans: new Set(['comments', 'h', 'help']),
     positional: arg => /^\d+$/.test(arg),
     values: new Set(SHARED_VALUE_FLAGS),
