@@ -4,40 +4,73 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@faker-js/faker':
+      specifier: ^10.6.0
+      version: 10.6.0
+    '@gtbuchanan/eslint-config':
+      specifier: ^0.5.2
+      version: 0.5.2
+    '@gtbuchanan/tsconfig':
+      specifier: ^0.2.0
+      version: 0.2.0
+    '@modelcontextprotocol/sdk':
+      specifier: ^1.29.0
+      version: 1.29.0
+    '@types/node':
+      specifier: ^24.19.2
+      version: 24.19.2
+    eslint:
+      specifier: ^10.13.0
+      version: 10.13.0
+    jiti:
+      specifier: ^2.7.0
+      version: 2.7.0
+    typescript:
+      specifier: ^6.0.3
+      version: 6.0.3
+    vitest:
+      specifier: ^4.1.6
+      version: 4.1.6
+    zod:
+      specifier: ^4.4.3
+      version: 4.4.3
+
 importers:
 
   .:
     dependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^1.29.0
+        specifier: 'catalog:'
         version: 1.29.0(zod@4.4.3)
       zod:
-        specifier: ^4.4.3
+        specifier: 'catalog:'
         version: 4.4.3
     devDependencies:
       '@faker-js/faker':
-        specifier: ^10.6.0
+        specifier: 'catalog:'
         version: 10.6.0
       '@gtbuchanan/eslint-config':
-        specifier: ^0.5.2
+        specifier: 'catalog:'
         version: 0.5.2(@typescript-eslint/eslint-plugin@8.72.1(@typescript-eslint/parser@8.72.1(eslint@10.13.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.13.0(jiti@2.7.0))(typescript@6.0.3))(@typescript-eslint/utils@8.72.1(eslint@10.13.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.13.0(jiti@2.7.0))(postcss@8.5.14)(typescript@6.0.3)(vitest@4.1.6(@types/node@24.19.2)(vite@7.3.1(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))
       '@gtbuchanan/tsconfig':
-        specifier: ^0.2.0
+        specifier: 'catalog:'
         version: 0.2.0(typescript@6.0.3)
       '@types/node':
-        specifier: ^24.19.2
+        specifier: 'catalog:'
         version: 24.19.2
       eslint:
-        specifier: ^10.13.0
+        specifier: 'catalog:'
         version: 10.13.0(jiti@2.7.0)
       jiti:
-        specifier: ^2.7.0
+        specifier: 'catalog:'
         version: 2.7.0
       typescript:
-        specifier: ^6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vitest:
-        specifier: ^4.1.6
+        specifier: 'catalog:'
         version: 4.1.6(@types/node@24.19.2)(vite@7.3.1(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1))
 
 packages:
@@ -1458,10 +1491,6 @@ packages:
     resolution: {integrity: sha512-CRT1WTyuQoD771GW56XEZFQ/ZoSfWid1alKGDYMmkt2yl8UXrVR4pspqWNEcqKvVIzg6PAltWjxcSSPrboA4iA==}
     engines: {node: '>=18.0.0'}
 
-  expect-type@1.3.0:
-    resolution: {integrity: sha512-knvyeauYhqjOYvQ66MznSMs83wmHrCycNEN6Ao+2AeYEfxUIkuiVxdEa1qlGEPK+We3n0THiDciYSsCcgW/DoA==}
-    engines: {node: '>=12.0.0'}
-
   expect-type@1.4.0:
     resolution: {integrity: sha512-KfYbmpRm0VbLjEvVa9yGwCi9GI34xvi7A/HXYWQO65CSD2u3MczUJSuwXKFIxlGsgBQizV9q5J9NHj4VG0n+pA==}
     engines: {node: '>=12.0.0'}
@@ -2317,10 +2346,6 @@ packages:
   tinyexec@1.1.2:
     resolution: {integrity: sha512-dAqSqE/RabpBKI8+h26GfLq6Vb3JVXs30XYQjdMjaj/c2tS8IYYMbIzP599KtRj7c57/wYApb3QjgRgXmrCukA==}
     engines: {node: '>=18'}
-
-  tinyglobby@0.2.16:
-    resolution: {integrity: sha512-pn99VhoACYR8nFHhxqix+uvsbXineAasWm5ojXoN8xEwK5Kd3/TrhNn1wByuD52UxWRLy8pu+kRMniEi6Eq9Zg==}
-    engines: {node: '>=12.0.0'}
 
   tinyglobby@0.2.17:
     resolution: {integrity: sha512-wXR/dYpcqKmfWpEdZjiKJOwCNFndD0DMnrW/cYjVGttEkBfVgcLFHoNrlj47mjOVic9yyNu65alsgF4NQyTa2g==}
@@ -3872,8 +3897,6 @@ snapshots:
     dependencies:
       eventsource-parser: 3.0.8
 
-  expect-type@1.3.0: {}
-
   expect-type@1.4.0: {}
 
   express-rate-limit@8.5.2(express@5.2.1):
@@ -4996,11 +5019,6 @@ snapshots:
 
   tinyexec@1.1.2: {}
 
-  tinyglobby@0.2.16:
-    dependencies:
-      fdir: 6.5.0(picomatch@4.0.4)
-      picomatch: 4.0.4
-
   tinyglobby@0.2.17:
     dependencies:
       fdir: 6.5.0(picomatch@4.0.4)
@@ -5155,7 +5173,7 @@ snapshots:
       '@vitest/spy': 4.1.6
       '@vitest/utils': 4.1.6
       es-module-lexer: 2.1.0
-      expect-type: 1.3.0
+      expect-type: 1.4.0
       magic-string: 0.30.21
       obug: 2.1.1
       pathe: 2.0.3
@@ -5163,7 +5181,7 @@ snapshots:
       std-env: 4.1.0
       tinybench: 2.9.0
       tinyexec: 1.1.2
-      tinyglobby: 0.2.16
+      tinyglobby: 0.2.17
       tinyrainbow: 3.1.0
       vite: 7.3.1(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)
       why-is-node-running: 2.3.0

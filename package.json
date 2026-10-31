@@ -30,18 +30,18 @@
     "typecheck:ts": "tsc"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
-    "zod": "^4.4.3"
+    "@modelcontextprotocol/sdk": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@faker-js/faker": "^10.6.0",
-    "@gtbuchanan/eslint-config": "^0.5.2",
-    "@gtbuchanan/tsconfig": "^0.2.0",
-    "@types/node": "^24.19.2",
-    "eslint": "^10.13.0",
-    "jiti": "^2.7.0",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.6"
+    "@faker-js/faker": "catalog:",
+    "@gtbuchanan/eslint-config": "catalog:",
+    "@gtbuchanan/tsconfig": "catalog:",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "jiti": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "publishConfig": {
     "access": "public",
