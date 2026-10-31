@@ -1,5 +1,6 @@
 # Stopgap until gtbuchanan/tooling's CLI is adopted; its reusable cd.yml
 # versions and publishes through changesets, which this repo does not use yet.
+---
 jobs:
   publish:
     environment: release
