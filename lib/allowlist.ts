@@ -82,7 +82,7 @@ export const rejectBlockedFlags = (args: readonly string[], blockedFlags: Readon
       a === f || a.startsWith(f + '=') || f.startsWith(a.split('=', 1)[0] ?? a) ||
       // Short flags (-X) accept concatenated values (-XPOST) in most CLIs
       // (pflag/cobra, getopt). Match any arg starting with a 2-char short flag.
-      (f.length === 2 && f[0] === '-' && f[1] !== '-' && a.startsWith(f)),
+      (f.length === 2 && f.startsWith('-') && f[1] !== '-' && a.startsWith(f)),
     ),
   );
   return flag ? fail(`Flag not allowed: ${flag}`) : null;
