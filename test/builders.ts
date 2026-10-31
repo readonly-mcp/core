@@ -86,6 +86,80 @@ export const relativeFilePath = (): string => `${faker.lorem.word()}/${fileName(
  */
 export const absolutePath = (): string => `/${faker.lorem.slug()}/${faker.lorem.slug()}`;
 
+const placeholders = {
+  branch: () => faker.lorem.slug(2),
+  file: () => fileName(),
+  host: () => faker.internet.domainName(),
+  number: resourceId,
+  owner: ownerName,
+  path: relativeFilePath,
+  repo: ownerName,
+  sha: commitSha,
+  version: () => `v${faker.system.semver()}`,
+  word: () => faker.lorem.word(),
+} satisfies Readonly<Record<string, () => string>>;
+
+/*
+ * The runtime regex's `[a-z]`, spelled out: template literal types have no
+ * character classes. `Lowercase<C>` tricks would also admit non-ASCII
+ * letters the regex rejects.
+ */
+type Letter = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m"
+  | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z";
+
+/** The run of lowercase letters `S` starts with, which the filler reads as a key. */
+type LeadingKey<S extends string, Key extends string = ""> =
+  S extends `${infer C extends Letter}${infer Rest}` ? LeadingKey<Rest, `${Key}${C}`> : Key;
+
+/** Every key the filler would read out of `S`; `""` where a colon starts none. */
+type KeysIn<S extends string> =
+  S extends `${string}:${infer After}` ? LeadingKey<After> | KeysIn<After> : never;
+
+type UnknownKeys<S extends string> = Exclude<KeysIn<S>, keyof typeof placeholders | "">;
+
+/**
+ * `S` itself when every placeholder in it is known, otherwise a message type
+ * that no argument matches. A widened `string` is rejected outright, since
+ * its keys cannot be checked: tables feeding a template need `as const`.
+ */
+type CheckedTemplate<S extends string> =
+  string extends S ? "a template must be a string literal"
+  : [UnknownKeys<S>] extends [never] ? S
+  : `unknown template placeholder :${UnknownKeys<S>}`;
+
+type Filler = <const S extends string>(template: CheckedTemplate<S>) => string;
+
+// The same generators, looked up by the plain string the regex captures.
+const generators: Readonly<Partial<Record<string, () => string>>> = placeholders;
+
+/**
+ * A filler for `:key` placeholders in a route or argument template, e.g.
+ * `repos/:owner/:repo/pulls/:number` → `repos/octo-org/widget/pulls/42`.
+ * Every occurrence of a key across the filler's calls gets the same value,
+ * so an alias's args and its expected canonical args agree. The template
+ * doubles as a stable test name. `:key` rather than `{key}`, which tea
+ * expands itself. Unknown keys fail to compile.
+ */
+export const templateFiller = (): Filler => {
+  const values = new Map<string, string>();
+  const valueOf = (placeholder: string, key: string): string => {
+    const known = values.get(key);
+    if (known !== undefined) return known;
+    const generate = generators[key];
+    // Unreachable through the types; kept for callers that bypass them.
+    if (generate === undefined) throw new Error(`Unknown template placeholder: ${placeholder}`);
+    const value = generate();
+    values.set(key, value);
+    return value;
+  };
+  return (template) => template.replace(/:([a-z]+)/g, valueOf);
+};
+
+/**
+ * Fills one template with fresh values; see `templateFiller`.
+ */
+export const template: Filler = (text) => templateFiller()(text);
+
 /**
  * Arbitrary https URL on an arbitrary host.
  */
