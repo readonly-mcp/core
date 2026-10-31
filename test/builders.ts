@@ -124,8 +124,8 @@ type UnknownKeys<S extends string> = Exclude<KeysIn<S>, keyof typeof placeholder
  */
 type CheckedTemplate<S extends string> =
   string extends S ? 'a template must be a string literal'
-  : [UnknownKeys<S>] extends [never] ? S
-  : `unknown template placeholder :${UnknownKeys<S>}`;
+    : [UnknownKeys<S>] extends [never] ? S
+        : `unknown template placeholder :${UnknownKeys<S>}`;
 
 type Filler = <const S extends string>(template: CheckedTemplate<S>) => string;
 

@@ -101,7 +101,8 @@ export const register = (server: McpServer) =>
         // for directory responses and still returns JSON.
         const [top,,, kind] = normalizeApiPath(endpoint).split('/');
         const rawAccept = top === 'repos' && kind === 'contents'
-          ? ['-H', 'Accept: application/vnd.github.raw+json'] : [];
+          ? ['-H', 'Accept: application/vnd.github.raw+json']
+          : [];
         // Inject --method GET immediately after the endpoint, before any
         // user-supplied flags. Appending it at the end would be defeated by
         // a `--` (end-of-options marker) in user args, since everything after
