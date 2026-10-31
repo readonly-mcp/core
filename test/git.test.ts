@@ -67,7 +67,7 @@ describe.concurrent('git tool (unit)', () => {
 
   describe('cwd parameter', () => {
     const toplevel = execFileSync('git', ['rev-parse', '--show-toplevel'], {
-      timeout: 5_000,
+      timeout: 5000,
     }).toString().trim();
 
     it('rejects cwd that is not a known worktree', async ({ expect }) => {
@@ -449,7 +449,7 @@ describe.concurrent('git tool (integration)', () => {
 
     afterAll(() => {
       try { execFileSync('git', ['worktree', 'remove', '--force', worktreePath], { timeout: 10_000 }); } catch {}
-      try { execFileSync('git', ['branch', '-D', branchName], { timeout: 5_000 }); } catch {}
+      try { execFileSync('git', ['branch', '-D', branchName], { timeout: 5000 }); } catch {}
     });
 
     it('accepts linked worktree as cwd', async ({ expect }) => {

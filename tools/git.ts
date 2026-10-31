@@ -43,7 +43,7 @@ const IS_WIN = process.platform === 'win32';
 const getWorktreePaths = () => {
   try {
     const out = execFileSync('git', ['worktree', 'list', '--porcelain'], {
-      timeout: 5_000,
+      timeout: 5000,
     }).toString();
     return out
       .split('\n')
