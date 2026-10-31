@@ -1,8 +1,27 @@
 allowBuilds:
   esbuild: true
+  unrs-resolver: false
+
+catalog:
+  '@faker-js/faker': ^10.6.0
+  '@gtbuchanan/eslint-config': ^0.5.2
+  '@gtbuchanan/tsconfig': ^0.2.0
+  '@modelcontextprotocol/sdk': ^1.29.0
+  '@types/node': ^24.19.2
+  eslint: ^10.13.0
+  jiti: ^2.7.0
+  typescript: ^6.0.3
+  vitest: ^4.1.6
+  zod: ^4.4.3
+
+engineStrict: true
+
+hoist: false
 
 # 4320 minutes = 3 days, matching the shared Renovate preset's quarantine.
 minimumReleaseAge: 4320
 minimumReleaseAgeExclude:
   - '@gtbuchanan/*'
   - '@readonly-mcp/*'
+
+strictPeerDependencies: true

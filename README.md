@@ -24,18 +24,18 @@ The goal is to make auto-allow safe for read-only tools. Without enforcement at 
 
 ### Excluded by design
 
-| Command / flag | Reason |
-|---|---|
-| `chezmoi cat-config` | May leak encryption keys, GPG recipient IDs, or other sensitive configuration |
-| `chezmoi data` | Leaks template variables that may contain secrets |
-| `printenv` / `env` | Leaks environment variables (API keys, tokens) |
-| `rg` | Redundant with host `Grep` tool; allows searching arbitrary paths |
-| `cat`, `head`, `tail`, `bat`, `diff`, `delta` | Redundant with host `Read` tool; path args duplicate file-read surface area |
-| `git diff --no-index` | Reads arbitrary files outside the repo |
-| `git --output` / `diff -o` | Writes command output to a file |
-| `gh variable get` | Returns plaintext values that may contain internal URLs, hostnames, or quasi-sensitive configuration |
-| `tea logins helper` / `git-credential` | Git credential helper protocol answers with the token on stdout |
-| `tea notifications` | Not yet confirmed that listing leaves read state untouched |
+| Command / flag                                | Reason                                                                                               |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `chezmoi cat-config`                          | May leak encryption keys, GPG recipient IDs, or other sensitive configuration                        |
+| `chezmoi data`                                | Leaks template variables that may contain secrets                                                    |
+| `printenv` / `env`                            | Leaks environment variables (API keys, tokens)                                                       |
+| `rg`                                          | Redundant with host `Grep` tool; allows searching arbitrary paths                                    |
+| `cat`, `head`, `tail`, `bat`, `diff`, `delta` | Redundant with host `Read` tool; path args duplicate file-read surface area                          |
+| `git diff --no-index`                         | Reads arbitrary files outside the repo                                                               |
+| `git --output` / `diff -o`                    | Writes command output to a file                                                                      |
+| `gh variable get`                             | Returns plaintext values that may contain internal URLs, hostnames, or quasi-sensitive configuration |
+| `tea logins helper` / `git-credential`        | Git credential helper protocol answers with the token on stdout                                      |
+| `tea notifications`                           | Not yet confirmed that listing leaves read state untouched                                           |
 
 ## Tools
 
@@ -52,6 +52,7 @@ Read-only shell utilities: `basename`, `date`, `dirname`, `eza`, `file`, `jq`, `
 Read-only git commands: `blame`, `branch`, `describe`, `diff`, `log`, `ls-files`, `ls-tree`, `merge-base`, `reflog`, `remote`, `rev-parse`, `shortlog`, `show`, `stash`, `status`, `worktree`
 
 Additional restrictions:
+
 - `--output` blocked globally (prefix matching defeats abbreviation)
 - `-o` short flag blocked on `diff` only (other commands use `-o` for unrelated flags, e.g., `ls-files -o` = `--others`)
 - `--no-index` blocked globally (prefix matching)
@@ -78,6 +79,7 @@ Read-only Gitea and Forgejo CLI commands: `branches list`, `comments list`, `iss
 Also supports `--version`, `-v`, `--help`, `-h` as standalone flags. Noun and verb aliases (`pr`, `ms`, `ls`, …) are accepted and run under their canonical names.
 
 Additional restrictions:
+
 - Viewing by bare index (`pulls 2`, `issues 5`) accepts only known flags and a single numeric index, because tea dispatches to any positional naming a child command (`pulls --state all merge 2`)
 - `milestones issues` rejects its `add`/`remove` children, by name or alias, anywhere in the args
 - `--repo` accepts only an `owner/name` slug; local repository paths are rejected
@@ -145,9 +147,7 @@ To auto-approve all readonly tools, add to `~/.claude/settings.json`:
 ```json
 {
   "permissions": {
-    "allow": [
-      "mcp__readonly__*"
-    ]
+    "allow": ["mcp__readonly__*"]
   }
 }
 ```

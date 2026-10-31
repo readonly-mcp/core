@@ -6,7 +6,13 @@
     "rewriteRelativeImportExtensions": true,
     "verbatimModuleSyntax": true
   },
-  "exclude": ["dist"],
-  "extends": ["@gtbuchanan/tsconfig/node.json"],
-  "include": ["**/*.ts"]
+  "exclude": [
+    "dist"
+  ],
+  "extends": [
+    "@gtbuchanan/tsconfig/node.json"
+  ],
+  "include": [
+    "**/*.ts"
+  ]
 }

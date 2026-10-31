@@ -117,16 +117,16 @@
  * - `tea --debug` / `--vvv`: may print the Authorization header.
  * - `tea labels --save`: writes the label set to a file.
  */
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import packageJson from "./package.json" with { type: "json" };
-import * as tools from "./tools/index.ts";
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import packageJson from './package.json' with { type: 'json' };
+import * as tools from './tools/index.ts';
 
 const { version } = packageJson;
 
-const server = new McpServer({ name: "readonly", version });
+const server = new McpServer({ name: 'readonly', version });
 
-Object.values(tools).forEach((register) => register(server));
+for (const register of Object.values(tools)) register(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);

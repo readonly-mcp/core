@@ -1,24 +1,24 @@
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 // Uses execShell instead of exec for Windows compatibility: pnpm installed via
 // npm or corepack ships as a .cmd wrapper that execFile cannot invoke directly.
 // execShell is a no-op on non-Windows and wraps with bash on Windows.
-import { execShell } from "../lib/exec.ts";
-import { ArgsSchema, matchesAllowlist, rejectSubcommand, rejectBlockedFlags } from "../lib/allowlist.ts";
+import { ArgsSchema, matchesAllowlist, rejectBlockedFlags, rejectSubcommand } from '../lib/allowlist.ts';
+import { execShell } from '../lib/exec.ts';
 
-const GLOBAL_FLAGS = new Set(["--version", "--help", "-h"]);
+const GLOBAL_FLAGS = new Set(['--version', '--help', '-h']);
 
 const SUBCOMMANDS = new Set([
-  "audit", "bin", "licenses list", "list", "outdated", "root", "search", "store status", "why",
+  'audit', 'bin', 'licenses list', 'list', 'outdated', 'root', 'search', 'store status', 'why',
 ]);
 
 // --fix: pnpm audit --fix attempts to update packages
 // --registry: prevents SSRF / data exfiltration via attacker-controlled registries
-const BLOCKED_FLAGS = new Set(["--fix", "--registry"]);
+const BLOCKED_FLAGS = new Set(['--fix', '--registry']);
 
 export const register = (server: McpServer) =>
   server.tool(
-    "pnpm",
-    "Run read-only pnpm commands (--version, --help, audit, bin, licenses list, list, outdated, root, search, store status, why)",
+    'pnpm',
+    'Run read-only pnpm commands (--version, --help, audit, bin, licenses list, list, outdated, root, search, store status, why)',
     ArgsSchema,
     async ({ args }) => {
       const [only, ...rest] = args;
@@ -27,6 +27,6 @@ export const register = (server: McpServer) =>
         return rejectSubcommand(args, SUBCOMMANDS);
       const rejected = rejectBlockedFlags(args, BLOCKED_FLAGS);
       if (rejected) return rejected;
-      return execShell("pnpm", args);
+      return execShell('pnpm', args);
     },
   );

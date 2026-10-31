@@ -44,9 +44,7 @@ These are non-negotiable. Every change must preserve them:
 1. Use `exec()` from `lib/exec.ts` — never `child_process` directly
 1. Re-export from `tools/index.ts`
 1. Add tests in `test/<name>.test.ts` covering allowed commands, blocked
-   subcommands, blocked flags, and injection attempts. Write each `vi.mock`
-   path with the module's `.ts` specifier: vitest matches it exactly, and a
-   stale path silently leaves the real module in place.
+   subcommands, blocked flags, and injection attempts.
 
 ## Adding Subcommands to an Existing Tool
 

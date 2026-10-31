@@ -7,7 +7,7 @@
  * boundary under test decides.
  */
 
-import { faker } from "@faker-js/faker";
+import { faker } from '@faker-js/faker';
 
 /**
  * A source of arbitrary words that never repeats one, for tests where a value
@@ -18,7 +18,7 @@ export const distinctWords = (): (() => string) => {
   const pool = faker.helpers.shuffle([...faker.definitions.lorem.word]);
   return () => {
     const word = pool.pop();
-    if (word === undefined) throw new Error("distinctWords exhausted the lorem word list");
+    if (word === undefined) throw new Error('distinctWords exhausted the lorem word list');
     return word;
   };
 };
@@ -104,18 +104,18 @@ const placeholders = {
  * character classes. `Lowercase<C>` tricks would also admit non-ASCII
  * letters the regex rejects.
  */
-type Letter = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m"
-  | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z";
+type Letter = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm'
+  | 'n' | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z';
 
 /** The run of lowercase letters `S` starts with, which the filler reads as a key. */
-type LeadingKey<S extends string, Key extends string = ""> =
+type LeadingKey<S extends string, Key extends string = ''> =
   S extends `${infer C extends Letter}${infer Rest}` ? LeadingKey<Rest, `${Key}${C}`> : Key;
 
 /** Every key the filler would read out of `S`; `""` where a colon starts none. */
 type KeysIn<S extends string> =
   S extends `${string}:${infer After}` ? LeadingKey<After> | KeysIn<After> : never;
 
-type UnknownKeys<S extends string> = Exclude<KeysIn<S>, keyof typeof placeholders | "">;
+type UnknownKeys<S extends string> = Exclude<KeysIn<S>, keyof typeof placeholders | ''>;
 
 /**
  * `S` itself when every placeholder in it is known, otherwise a message type
@@ -123,9 +123,9 @@ type UnknownKeys<S extends string> = Exclude<KeysIn<S>, keyof typeof placeholder
  * its keys cannot be checked: tables feeding a template need `as const`.
  */
 type CheckedTemplate<S extends string> =
-  string extends S ? "a template must be a string literal"
-  : [UnknownKeys<S>] extends [never] ? S
-  : `unknown template placeholder :${UnknownKeys<S>}`;
+  string extends S ? 'a template must be a string literal'
+    : [UnknownKeys<S>] extends [never] ? S
+        : `unknown template placeholder :${UnknownKeys<S>}`;
 
 type Filler = <const S extends string>(template: CheckedTemplate<S>) => string;
 
@@ -152,13 +152,13 @@ export const templateFiller = (): Filler => {
     values.set(key, value);
     return value;
   };
-  return (template) => template.replace(/:([a-z]+)/g, valueOf);
+  return template => template.replaceAll(/:([a-z]+)/g, valueOf);
 };
 
 /**
  * Fills one template with fresh values; see `templateFiller`.
  */
-export const template: Filler = (text) => templateFiller()(text);
+export const template: Filler = text => templateFiller()(text);
 
 /**
  * Arbitrary https URL on an arbitrary host.

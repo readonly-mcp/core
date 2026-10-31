@@ -18,32 +18,36 @@
     "lib/",
     "tools/"
   ],
-  "engines": {
-    "node": ">=18",
-    "pnpm": ">=10.16.0"
-  },
   "scripts": {
     "build": "pnpm run compile:ts && node scripts/stage-package.ts",
     "compile:ts": "tsc -p tsconfig.build.json",
+    "lint:eslint": "eslint",
     "test": "vitest run",
     "typecheck:ts": "tsc"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
-    "zod": "^4.4.3"
+    "@modelcontextprotocol/sdk": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@faker-js/faker": "^10.6.0",
-    "@gtbuchanan/tsconfig": "^0.2.0",
-    "@types/node": "^24.19.2",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.6"
+    "@faker-js/faker": "catalog:",
+    "@gtbuchanan/eslint-config": "catalog:",
+    "@gtbuchanan/tsconfig": "catalog:",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "jiti": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "packageManager": "pnpm@11.3.0",
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=10.16.0"
   },
   "publishConfig": {
     "access": "public",
     "bin": {
       "readonly-mcp": "./index.js"
     }
-  },
-  "packageManager": "pnpm@11.3.0"
+  }
 }

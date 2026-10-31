@@ -1,12 +1,12 @@
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { z } from "zod";
-import { execShell, fail } from "../lib/exec.ts";
-import { ArgsSchema } from "../lib/allowlist.ts";
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { z } from 'zod';
+import { ArgsSchema } from '../lib/allowlist.ts';
+import { execShell, fail } from '../lib/exec.ts';
 
 const COMMANDS = new Set([
-  "basename", "date", "dirname", "eza", "file", "jq", "ls", "pwd",
-  "readlink", "realpath", "stat", "wc", "which", "whoami",
+  'basename', 'date', 'dirname', 'eza', 'file', 'jq', 'ls', 'pwd',
+  'readlink', 'realpath', 'stat', 'wc', 'which', 'whoami',
 ]);
 
 // jq: block file-path arguments to prevent reading arbitrary files.
@@ -14,21 +14,21 @@ const COMMANDS = new Set([
 // Flags that read files — block entirely (data exfiltration via --slurpfile/--rawfile,
 // arbitrary filter loading via --from-file/-f, library path probing via -L)
 const JQ_FILE_FLAGS = new Set([
-  "--slurpfile", "--rawfile", "--from-file", "-f", "-L", "--library-path",
+  '--slurpfile', '--rawfile', '--from-file', '-f', '-L', '--library-path',
 ]);
 // Flags that take two following arguments (name + value)
-const JQ_PAIR_FLAGS = new Set(["--arg", "--argjson"]);
+const JQ_PAIR_FLAGS = new Set(['--arg', '--argjson']);
 // Flags that take one following argument
-const JQ_VALUE_FLAGS = new Set(["--indent"]);
+const JQ_VALUE_FLAGS = new Set(['--indent']);
 
 // Single characters corresponding to file-reading short flags (-f, -L)
-const JQ_FILE_CHARS = "fL";
+const JQ_FILE_CHARS = 'fL';
 
 const rejectFileFlag = (arg: string): CallToolResult | null => {
-  const base = arg.split("=")[0] ?? arg;
+  const base = arg.split('=', 1)[0] ?? arg;
   if (JQ_FILE_FLAGS.has(base)) return fail(`Flag not allowed for jq: ${base}`);
-  if (arg.startsWith("-") && !arg.startsWith("--")) {
-    const ch = [...arg.slice(1)].find((c) => JQ_FILE_CHARS.includes(c));
+  if (arg.startsWith('-') && !arg.startsWith('--')) {
+    const ch = [...arg.slice(1)].find(c => JQ_FILE_CHARS.includes(c));
     if (ch) return fail(`Flag not allowed for jq: -${ch}`);
   }
   return null;
@@ -47,7 +47,7 @@ const validateJqArgs = (args: readonly string[]): CallToolResult | null => {
     if (blocked) return blocked;
     if (JQ_PAIR_FLAGS.has(arg)) { i += 2; continue; }
     if (JQ_VALUE_FLAGS.has(arg)) { i++; continue; }
-    if (arg.startsWith("-")) continue;
+    if (arg.startsWith('-')) continue;
     // First non-flag arg is the filter expression; rest are file paths
     for (let j = i + 1; j < args.length; j++) {
       const rest = args[j];
@@ -56,7 +56,7 @@ const validateJqArgs = (args: readonly string[]): CallToolResult | null => {
       if (jblocked) return jblocked;
       if (JQ_PAIR_FLAGS.has(rest)) { j += 2; continue; }
       if (JQ_VALUE_FLAGS.has(rest)) { j++; continue; }
-      if (rest.startsWith("-")) continue;
+      if (rest.startsWith('-')) continue;
       return fail(`File arguments not allowed for jq (use stdin via piping). Got: ${rest}`);
     }
     break;
@@ -66,16 +66,16 @@ const validateJqArgs = (args: readonly string[]): CallToolResult | null => {
 
 export const register = (server: McpServer) =>
   server.tool(
-    "shell",
-    "Run read-only shell utilities (basename, date, dirname, eza, file, jq, ls, pwd, readlink, realpath, stat, wc, which, whoami)",
+    'shell',
+    'Run read-only shell utilities (basename, date, dirname, eza, file, jq, ls, pwd, readlink, realpath, stat, wc, which, whoami)',
     {
-      command: z.string().describe("Command name from the allowlist"),
+      command: z.string().describe('Command name from the allowlist'),
       ...ArgsSchema,
     },
     async ({ command, args }) => {
       if (!COMMANDS.has(command))
-        return fail(`Command not allowed: ${command}. Allowed: ${[...COMMANDS].join(", ")}`);
-      if (command === "jq") {
+        return fail(`Command not allowed: ${command}. Allowed: ${[...COMMANDS].join(', ')}`);
+      if (command === 'jq') {
         const rejection = validateJqArgs(args);
         if (rejection) return rejection;
       }
