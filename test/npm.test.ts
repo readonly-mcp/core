@@ -1,8 +1,9 @@
 import { faker } from "@faker-js/faker";
-import { describe, it, beforeAll, afterAll, vi, type ExpectStatic } from "vitest";
+import { describe, it, vi, type ExpectStatic } from "vitest";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import * as build from "./builders.ts";
-import { connectTool, startServer, assertBlocked, assertNotBlocked, textOf, echoed } from "./helpers.ts";
+import { connectTool, assertBlocked, assertNotBlocked, textOf, echoed } from "./helpers.ts";
+import { itWithPackageServer, packageServerTimeout } from "./package-fixture.ts";
 
 // --- Unit tests (mocked execShell) ---
 vi.mock("../lib/exec.ts", async (importOriginal) =>
@@ -43,67 +44,65 @@ describe.concurrent("npm tool (unit)", () => {
 });
 
 // --- Integration tests (real MCP server) ---
-describe.concurrent("npm tool (integration)", () => {
-  let server: ReturnType<typeof startServer>;
-  beforeAll(async () => { server = startServer(); await server.initialize(); });
-  afterAll(() => server.close());
+const integration = itWithPackageServer("npm");
 
+describe.concurrent("npm tool (integration)", { timeout: packageServerTimeout }, () => {
   describe("blocked subcommands", () => {
-    it.for(
+    integration.for(
       [
         ["install"], ["ci"], ["update"], ["uninstall", "lodash"],
         ["run", "build"], ["exec", "tsc"], ["publish"], ["init"],
         ["link"], ["pack"], ["prune"], ["rebuild"], ["dedupe"],
       ].map(args => ({ name: args.join(" "), args }))
-    )("blocks $name", async ({ args }, { expect }) => {
+    )("blocks $name", async ({ args }, { expect, server }) => {
       assertBlocked(expect, await server.callTool("npm", { args }));
     });
   });
 
   describe("blocked flags", () => {
-    it("blocks audit --fix", async ({ expect }) => {
+    integration("blocks audit --fix", async ({ expect, server }) => {
       assertBlocked(expect, await server.callTool("npm", { args: ["audit", "--fix"] }));
     });
 
-    it("blocks --registry", async ({ expect }) => {
+    integration("blocks --registry", async ({ expect, server }) => {
       assertBlocked(expect, await server.callTool("npm", { args: ["view", faker.internet.domainWord(), "--registry", build.httpsUrl()] }));
     });
 
-    it("blocks --registry=<url>", async ({ expect }) => {
+    integration("blocks --registry=<url>", async ({ expect, server }) => {
       assertBlocked(expect, await server.callTool("npm", { args: ["view", faker.internet.domainWord(), `--registry=${build.httpsUrl()}`] }));
     });
 
-    it("blocks --no-ignore-scripts (overrides injected --ignore-scripts)", async ({ expect }) => {
+    integration("blocks --no-ignore-scripts (overrides injected --ignore-scripts)", async ({ expect, server }) => {
       assertBlocked(expect, await server.callTool("npm", { args: ["audit", "--no-ignore-scripts"] }));
     });
 
-    it("blocks abbreviated --reg (npm expands to --registry)", async ({ expect }) => {
+    integration("blocks abbreviated --reg (npm expands to --registry)", async ({ expect, server }) => {
       assertBlocked(expect, await server.callTool("npm", { args: ["view", faker.internet.domainWord(), "--reg", build.httpsUrl()] }));
     });
 
-    it("blocks abbreviated --reg=<url>", async ({ expect }) => {
+    integration("blocks abbreviated --reg=<url>", async ({ expect, server }) => {
       assertBlocked(expect, await server.callTool("npm", { args: ["view", faker.internet.domainWord(), `--reg=${build.httpsUrl()}`] }));
     });
 
-    it("blocks abbreviated --fi (matches --fix)", async ({ expect }) => {
+    integration("blocks abbreviated --fi (matches --fix)", async ({ expect, server }) => {
       assertBlocked(expect, await server.callTool("npm", { args: ["audit", "--fi"] }));
     });
 
-    it("blocks --ignore-scripts=false (overrides injected --ignore-scripts)", async ({ expect }) => {
+    integration("blocks --ignore-scripts=false (overrides injected --ignore-scripts)", async ({ expect, server }) => {
       assertBlocked(expect, await server.callTool("npm", { args: ["audit", "--ignore-scripts=false"] }));
     });
   });
 
   describe("allowed subcommands", () => {
-    it("allows ls", async ({ expect }) => {
+    integration("allows ls", async ({ expect, server }) => {
       assertNotBlocked(expect, await server.callTool("npm", { args: ["ls"] }));
     });
 
-    it("allows explain", async ({ expect }) => {
+    integration("allows explain", async ({ expect, server }) => {
       assertNotBlocked(expect, await server.callTool("npm", { args: ["explain", "zod"] }));
     });
 
-    it("allows view", async ({ expect }) => {
+    integration("allows view", async ({ expect, server }) => {
       assertNotBlocked(expect, await server.callTool("npm", { args: ["view", "zod"] }));
     });
   });

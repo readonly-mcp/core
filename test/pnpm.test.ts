@@ -1,7 +1,8 @@
-import { describe, it, beforeAll, afterAll, vi, type ExpectStatic } from "vitest";
+import { describe, it, vi, type ExpectStatic } from "vitest";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import * as build from "./builders.ts";
-import { connectTool, startServer, assertBlocked, assertNotBlocked, textOf } from "./helpers.ts";
+import { connectTool, assertBlocked, assertNotBlocked, textOf } from "./helpers.ts";
+import { itWithPackageServer, packageServerTimeout } from "./package-fixture.ts";
 
 // --- Unit tests (mocked execShell) ---
 vi.mock("../lib/exec.ts", async (importOriginal) =>
@@ -46,78 +47,76 @@ describe.concurrent("pnpm tool (unit)", () => {
 });
 
 // --- Integration tests (real MCP server) ---
-describe.concurrent("pnpm tool (integration)", () => {
-  let server: ReturnType<typeof startServer>;
-  beforeAll(async () => { server = startServer(); await server.initialize(); });
-  afterAll(() => server.close());
+const integration = itWithPackageServer("pnpm");
 
+describe.concurrent("pnpm tool (integration)", { timeout: packageServerTimeout }, () => {
   describe("allowed global flags", () => {
-    it.for([
+    integration.for([
       { name: "--version", args: ["--version"] },
       { name: "--help", args: ["--help"] },
       { name: "-h", args: ["-h"] },
-    ])("allows $name", async ({ args }, { expect }) => {
+    ])("allows $name", async ({ args }, { expect, server }) => {
       assertNotBlocked(expect, await server.callTool("pnpm", { args }));
     });
 
-    it("blocks --help with trailing args", async ({ expect }) => {
+    integration("blocks --help with trailing args", async ({ expect, server }) => {
       assertBlocked(expect, await server.callTool("pnpm", { args: ["--help", "install"] }));
     });
 
-    it("blocks -v (not in global flags)", async ({ expect }) => {
+    integration("blocks -v (not in global flags)", async ({ expect, server }) => {
       assertBlocked(expect, await server.callTool("pnpm", { args: ["-v"] }));
     });
   });
 
   describe("blocked subcommands", () => {
-    it.for(
+    integration.for(
       [
         ["add", "lodash"], ["remove", "lodash"], ["install"],
         ["update"], ["run", "build"], ["exec", "tsc"],
         ["publish"], ["init"], ["link"], ["unlink"],
         ["store", "prune"], ["patch", "lodash"],
       ].map(args => ({ name: args.join(" "), args }))
-    )("blocks $name", async ({ args }, { expect }) => {
+    )("blocks $name", async ({ args }, { expect, server }) => {
       assertBlocked(expect, await server.callTool("pnpm", { args }));
     });
   });
 
   describe("blocked flags", () => {
-    it("blocks audit --fix", async ({ expect }) => {
+    integration("blocks audit --fix", async ({ expect, server }) => {
       assertBlocked(expect, await server.callTool("pnpm", { args: ["audit", "--fix"] }));
     });
 
-    it("blocks --registry", async ({ expect }) => {
+    integration("blocks --registry", async ({ expect, server }) => {
       assertBlocked(expect, await server.callTool("pnpm", { args: ["list", "--registry", build.httpsUrl()] }));
     });
 
-    it("blocks --registry=<url>", async ({ expect }) => {
+    integration("blocks --registry=<url>", async ({ expect, server }) => {
       assertBlocked(expect, await server.callTool("pnpm", { args: ["list", `--registry=${build.httpsUrl()}`] }));
     });
 
-    it("blocks abbreviated --reg (expands to --registry)", async ({ expect }) => {
+    integration("blocks abbreviated --reg (expands to --registry)", async ({ expect, server }) => {
       assertBlocked(expect, await server.callTool("pnpm", { args: ["list", "--reg", build.httpsUrl()] }));
     });
 
-    it("blocks abbreviated --reg=<url>", async ({ expect }) => {
+    integration("blocks abbreviated --reg=<url>", async ({ expect, server }) => {
       assertBlocked(expect, await server.callTool("pnpm", { args: ["list", `--reg=${build.httpsUrl()}`] }));
     });
   });
 
   describe("allowed subcommands", () => {
-    it("allows list", async ({ expect }) => {
+    integration("allows list", async ({ expect, server }) => {
       assertNotBlocked(expect, await server.callTool("pnpm", { args: ["list"] }));
     });
 
-    it("allows why", async ({ expect }) => {
+    integration("allows why", async ({ expect, server }) => {
       assertNotBlocked(expect, await server.callTool("pnpm", { args: ["why", "zod"] }));
     });
 
-    it("allows licenses list", async ({ expect }) => {
+    integration("allows licenses list", async ({ expect, server }) => {
       assertNotBlocked(expect, await server.callTool("pnpm", { args: ["licenses", "list"] }));
     });
 
-    it("allows store status", async ({ expect }) => {
+    integration("allows store status", async ({ expect, server }) => {
       assertNotBlocked(expect, await server.callTool("pnpm", { args: ["store", "status"] }));
     });
   });

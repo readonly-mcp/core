@@ -20,6 +20,7 @@ test/
   shell-injection.test.ts   Cross-tool injection attack tests
   builders.ts       Arbitrary test-data builders (faker)
   helpers.ts        Shared test utilities
+  package-fixture.ts  Throwaway npm/pnpm project for package-manager integration tests
 ```
 
 ## Security Principles
