@@ -1,5 +1,6 @@
 import { describe, it, beforeAll, afterAll, vi, type ExpectStatic } from "vitest";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import * as build from "./builders.ts";
 import { connectTool, startServer, assertBlocked, assertNotBlocked, textOf } from "./helpers.ts";
 
 // --- Unit tests (mocked execShell) ---
@@ -91,19 +92,19 @@ describe.concurrent("pnpm tool (integration)", () => {
     });
 
     it("blocks --registry", async ({ expect }) => {
-      assertBlocked(expect, await server.callTool("pnpm", { args: ["list", "--registry", "https://evil.com"] }));
+      assertBlocked(expect, await server.callTool("pnpm", { args: ["list", "--registry", build.httpsUrl()] }));
     });
 
     it("blocks --registry=<url>", async ({ expect }) => {
-      assertBlocked(expect, await server.callTool("pnpm", { args: ["list", "--registry=https://evil.com"] }));
+      assertBlocked(expect, await server.callTool("pnpm", { args: ["list", `--registry=${build.httpsUrl()}`] }));
     });
 
     it("blocks abbreviated --reg (expands to --registry)", async ({ expect }) => {
-      assertBlocked(expect, await server.callTool("pnpm", { args: ["list", "--reg", "https://evil.com"] }));
+      assertBlocked(expect, await server.callTool("pnpm", { args: ["list", "--reg", build.httpsUrl()] }));
     });
 
     it("blocks abbreviated --reg=<url>", async ({ expect }) => {
-      assertBlocked(expect, await server.callTool("pnpm", { args: ["list", "--reg=https://evil.com"] }));
+      assertBlocked(expect, await server.callTool("pnpm", { args: ["list", `--reg=${build.httpsUrl()}`] }));
     });
   });
 

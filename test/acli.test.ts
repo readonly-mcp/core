@@ -1,3 +1,4 @@
+import { faker } from "@faker-js/faker";
 import { describe, it, beforeAll, afterAll, vi, type ExpectStatic } from "vitest";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { connectTool, startServer, assertBlocked, textOf } from "./helpers.ts";
@@ -38,7 +39,7 @@ describe.concurrent("acli tool (unit)", () => {
     );
 
     it("allows subcommand with flags", async ({ expect }) => {
-      assertAllowed(expect, await callMocked(["jira", "workitem", "list", "--project", "FOO"]));
+      assertAllowed(expect, await callMocked(["jira", "workitem", "list", "--project", faker.string.alpha({ casing: "upper", length: 3 })]));
     });
   });
 });

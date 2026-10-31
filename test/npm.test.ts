@@ -1,5 +1,7 @@
+import { faker } from "@faker-js/faker";
 import { describe, it, beforeAll, afterAll, vi, type ExpectStatic } from "vitest";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import * as build from "./builders.ts";
 import { connectTool, startServer, assertBlocked, assertNotBlocked, textOf } from "./helpers.ts";
 
 // --- Unit tests (mocked execShell) ---
@@ -68,11 +70,11 @@ describe.concurrent("npm tool (integration)", () => {
     });
 
     it("blocks --registry", async ({ expect }) => {
-      assertBlocked(expect, await server.callTool("npm", { args: ["view", "zod", "--registry", "https://evil.com"] }));
+      assertBlocked(expect, await server.callTool("npm", { args: ["view", faker.internet.domainWord(), "--registry", build.httpsUrl()] }));
     });
 
     it("blocks --registry=<url>", async ({ expect }) => {
-      assertBlocked(expect, await server.callTool("npm", { args: ["view", "zod", "--registry=https://evil.com"] }));
+      assertBlocked(expect, await server.callTool("npm", { args: ["view", faker.internet.domainWord(), `--registry=${build.httpsUrl()}`] }));
     });
 
     it("blocks --no-ignore-scripts (overrides injected --ignore-scripts)", async ({ expect }) => {
@@ -80,11 +82,11 @@ describe.concurrent("npm tool (integration)", () => {
     });
 
     it("blocks abbreviated --reg (npm expands to --registry)", async ({ expect }) => {
-      assertBlocked(expect, await server.callTool("npm", { args: ["view", "zod", "--reg", "https://evil.com"] }));
+      assertBlocked(expect, await server.callTool("npm", { args: ["view", faker.internet.domainWord(), "--reg", build.httpsUrl()] }));
     });
 
     it("blocks abbreviated --reg=<url>", async ({ expect }) => {
-      assertBlocked(expect, await server.callTool("npm", { args: ["view", "zod", "--reg=https://evil.com"] }));
+      assertBlocked(expect, await server.callTool("npm", { args: ["view", faker.internet.domainWord(), `--reg=${build.httpsUrl()}`] }));
     });
 
     it("blocks abbreviated --fi (matches --fix)", async ({ expect }) => {
