@@ -70,11 +70,11 @@ const SHARED_VALUE_FLAGS = [
   'R', 'r', 'remote', 'repo', 'state',
 ];
 
-type BarePolicy = {
+interface BarePolicy {
   booleans: ReadonlySet<string>;
   positional: (arg: string) => boolean;
   values: ReadonlySet<string>;
-};
+}
 
 const BARE: Record<string, BarePolicy> = {
   'issues': {
