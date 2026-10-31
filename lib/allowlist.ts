@@ -24,7 +24,7 @@ export const ArgsSchema = {
 
 const maxDepthOf = (allowlist: ReadonlySet<string>): number => {
   const entries = [...allowlist];
-  return entries.length === 0 ? 1 : Math.max(...entries.map((s) => s.split(' ').length));
+  return entries.length === 0 ? 1 : Math.max(...entries.map(s => s.split(' ').length));
 };
 
 export const matchesAllowlist = (args: readonly string[], allowlist: ReadonlySet<string>): boolean =>
@@ -76,9 +76,9 @@ export const rejectApiEndpoint = (endpoint: string | undefined, patterns: readon
 };
 
 export const rejectBlockedFlags = (args: readonly string[], blockedFlags: ReadonlySet<string>): CallToolResult | null => {
-  const flag = args.slice(1).find((a) =>
+  const flag = args.slice(1).find(a =>
     a !== '--' && a !== '-' &&
-    [...blockedFlags].some((f) =>
+    [...blockedFlags].some(f =>
       a === f || a.startsWith(f + '=') || f.startsWith(a.split('=')[0] ?? a) ||
       // Short flags (-X) accept concatenated values (-XPOST) in most CLIs
       // (pflag/cobra, getopt). Match any arg starting with a 2-char short flag.

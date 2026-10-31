@@ -79,7 +79,7 @@ type BarePolicy = {
 const BARE: Record<string, BarePolicy> = {
   issues: {
     booleans: new Set(['comments', 'h', 'help']),
-    positional: (arg) => /^\d+$/.test(arg),
+    positional: arg => /^\d+$/.test(arg),
     values: new Set([
       ...SHARED_VALUE_FLAGS,
       'A', 'a', 'assignee', 'author', 'F', 'from', 'K', 'k', 'keyword', 'kind',
@@ -88,12 +88,12 @@ const BARE: Record<string, BarePolicy> = {
   },
   'milestones issues': {
     booleans: new Set(['h', 'help']),
-    positional: (arg) => !['a', 'add', 'r', 'remove'].includes(arg),
+    positional: arg => !['a', 'add', 'r', 'remove'].includes(arg),
     values: new Set([...SHARED_VALUE_FLAGS, 'kind']),
   },
   pulls: {
     booleans: new Set(['comments', 'h', 'help']),
-    positional: (arg) => /^\d+$/.test(arg),
+    positional: arg => /^\d+$/.test(arg),
     values: new Set(SHARED_VALUE_FLAGS),
   },
 };
@@ -122,7 +122,7 @@ const rejectFlags = (args: readonly string[], blocked: ReadonlySet<string>): Cal
 // pass; `.` and `..` segments are paths, not names.
 const isRepoSlug = (value: string): boolean =>
   /^[\w.-]+\/[\w.-]+$/.test(value) &&
-  value.split('/').every((segment) => !/^\.+$/.test(segment));
+  value.split('/').every(segment => !/^\.+$/.test(segment));
 
 const repoValues = (args: readonly string[]): string[] => args.flatMap((arg, i) => {
   if (!isFlag(arg) || !['r', 'repo'].includes(flagName(arg))) return [];
@@ -131,7 +131,7 @@ const repoValues = (args: readonly string[]): string[] => args.flatMap((arg, i) 
 });
 
 const rejectRepoPath = (args: readonly string[]): CallToolResult | null => {
-  const path = repoValues(args).find((value) => !isRepoSlug(value));
+  const path = repoValues(args).find(value => !isRepoSlug(value));
   return path === undefined ? null : fail(`--repo must be an owner/name slug, not a path: ${path}`);
 };
 
@@ -145,7 +145,7 @@ const rejectBareArgs = (args: readonly string[], { booleans, positional, values 
     if (arg === undefined) {
       if (positionals.length > 1)
         return fail(`At most one positional argument allowed, got: ${positionals.join(' ')}`);
-      const invalid = positionals.find((p) => !positional(p));
+      const invalid = positionals.find(p => !positional(p));
       return invalid === undefined ? null : fail(`Positional argument not allowed: ${invalid}`);
     }
     if (endOfOptions || !arg.startsWith('-') || arg === '-')

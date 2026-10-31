@@ -4,7 +4,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { connectTool, startServer, assertBlocked, textOf } from './helpers.ts';
 
 // --- Unit tests (mocked exec) ---
-vi.mock('../lib/exec.ts', async (importOriginal) =>
+vi.mock('../lib/exec.ts', async importOriginal =>
   (await import('./helpers.ts')).withEchoExec(importOriginal));
 
 const { register } = await import('../tools/acli.ts');

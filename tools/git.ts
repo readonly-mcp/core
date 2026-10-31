@@ -47,8 +47,8 @@ const getWorktreePaths = () => {
     }).toString();
     return out
       .split('\n')
-      .filter((l) => l.startsWith('worktree '))
-      .map((l) => resolve(l.slice('worktree '.length).trim()));
+      .filter(l => l.startsWith('worktree '))
+      .map(l => resolve(l.slice('worktree '.length).trim()));
   } catch {
     return [];
   }
@@ -56,7 +56,7 @@ const getWorktreePaths = () => {
 
 const isKnownWorktree = (dir: string): boolean => {
   const target = resolve(dir);
-  return getWorktreePaths().some((wt) =>
+  return getWorktreePaths().some(wt =>
     IS_WIN ? wt.toLowerCase() === target.toLowerCase() : wt === target,
   );
 };
@@ -80,7 +80,7 @@ export const register = (server: McpServer) =>
       // Only diff has --output; other commands use -o for unrelated flags
       // (e.g., ls-files -o = --others).
       if (sub === 'diff') {
-        const shortO = args.slice(1).find((a) =>
+        const shortO = args.slice(1).find(a =>
           a.startsWith('-') && !a.startsWith('--') && a !== '-' &&
           [...(a.slice(1).split('=')[0] ?? a.slice(1))].includes('o'),
         );
@@ -123,13 +123,13 @@ export const register = (server: McpServer) =>
       }
       if (sub === 'remote') {
         const remoteArgs = args.slice(1);
-        const remoteSub = remoteArgs.find((a) => !a.startsWith('-'));
+        const remoteSub = remoteArgs.find(a => !a.startsWith('-'));
         if (remoteSub && !REMOTE_ALLOWED_SUBS.has(remoteSub))
           return fail(`Subcommand not allowed for git remote: ${remoteSub}. Allowed: (none), ${[...REMOTE_ALLOWED_SUBS].join(', ')}`);
         // `remote show` requires `-n` to prevent network I/O (SSRF risk)
         if (remoteSub === 'show' && !remoteArgs.includes('-n'))
           return fail('git remote show requires -n (no network I/O)');
-        const blockedFlag = remoteArgs.filter((a) => a.startsWith('-')).find((a) => !REMOTE_ALLOWED_FLAGS.has(a));
+        const blockedFlag = remoteArgs.filter(a => a.startsWith('-')).find(a => !REMOTE_ALLOWED_FLAGS.has(a));
         if (blockedFlag) return fail(`Flag not allowed for git remote: ${blockedFlag}`);
       }
       // Inject --no-pager to prevent interactive pager from blocking the process.

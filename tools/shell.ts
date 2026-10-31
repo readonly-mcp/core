@@ -28,7 +28,7 @@ const rejectFileFlag = (arg: string): CallToolResult | null => {
   const base = arg.split('=')[0] ?? arg;
   if (JQ_FILE_FLAGS.has(base)) return fail(`Flag not allowed for jq: ${base}`);
   if (arg.startsWith('-') && !arg.startsWith('--')) {
-    const ch = [...arg.slice(1)].find((c) => JQ_FILE_CHARS.includes(c));
+    const ch = [...arg.slice(1)].find(c => JQ_FILE_CHARS.includes(c));
     if (ch) return fail(`Flag not allowed for jq: -${ch}`);
   }
   return null;

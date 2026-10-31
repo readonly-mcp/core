@@ -152,13 +152,13 @@ export const templateFiller = (): Filler => {
     values.set(key, value);
     return value;
   };
-  return (template) => template.replace(/:([a-z]+)/g, valueOf);
+  return template => template.replace(/:([a-z]+)/g, valueOf);
 };
 
 /**
  * Fills one template with fresh values; see `templateFiller`.
  */
-export const template: Filler = (text) => templateFiller()(text);
+export const template: Filler = text => templateFiller()(text);
 
 /**
  * Arbitrary https URL on an arbitrary host.

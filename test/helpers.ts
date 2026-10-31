@@ -128,7 +128,7 @@ export const connectTool = async (register: (server: McpServer) => unknown) => {
   const { tools } = await client.listTools();
   const [tool, ...others] = tools;
   if (tool === undefined || others.length > 0)
-    throw new Error(`Expected one registered tool, got: ${tools.map((t) => t.name).join(', ')}`);
+    throw new Error(`Expected one registered tool, got: ${tools.map(t => t.name).join(', ')}`);
   return async (args: Record<string, unknown>): Promise<CallToolResult> =>
     remember(args, CallToolResultSchema.parse(await client.callTool({ name: tool.name, arguments: args })));
 };
