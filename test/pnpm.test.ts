@@ -5,7 +5,7 @@ import { assertBlocked, assertNotBlocked, connectTool, textOf } from './helpers.
 import { itWithPackageServer, packageServerTimeout } from './package-fixture.ts';
 
 // --- Unit tests (mocked execShell) ---
-vi.mock('../lib/exec.ts', async importOriginal =>
+vi.mock(import('../lib/exec.ts'), async importOriginal =>
   (await import('./helpers.ts')).withEchoExec(importOriginal));
 
 const { register } = await import('../tools/pnpm.ts');

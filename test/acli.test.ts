@@ -4,7 +4,7 @@ import { type ExpectStatic, afterAll, beforeAll, describe, it, vi } from 'vitest
 import { assertBlocked, connectTool, startServer, textOf } from './helpers.ts';
 
 // --- Unit tests (mocked exec) ---
-vi.mock('../lib/exec.ts', async importOriginal =>
+vi.mock(import('../lib/exec.ts'), async importOriginal =>
   (await import('./helpers.ts')).withEchoExec(importOriginal));
 
 const { register } = await import('../tools/acli.ts');

@@ -4,7 +4,7 @@ import * as build from './builders.ts';
 import { assertBlocked, connectTool, echoed, startServer, textOf } from './helpers.ts';
 
 // --- Unit tests (mocked exec) ---
-vi.mock('../lib/exec.ts', async importOriginal =>
+vi.mock(import('../lib/exec.ts'), async importOriginal =>
   (await import('./helpers.ts')).withEchoExec(importOriginal));
 
 const { register } = await import('../tools/tea.ts');
