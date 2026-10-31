@@ -34,8 +34,11 @@ jobs:
 
       - run: pnpm run build
 
+      # pnpm packs, since it replaces `catalog:` specifiers with versions.
+      - run: pnpm -C dist/source pack --out "$RUNNER_TEMP/package.tgz"
+
       # npm, not pnpm, so trusted publishing exchanges the OIDC token itself.
-      - run: npm publish ./dist/source
+      - run: npm publish "$RUNNER_TEMP/package.tgz"
 
 name: Release
 
