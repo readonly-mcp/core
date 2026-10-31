@@ -99,7 +99,7 @@ export const register = (server: McpServer) =>
         // responses return plain text instead of base64-encoded JSON.
         // Directory listings are unaffected — GitHub ignores the media type
         // for directory responses and still returns JSON.
-        const [top,,, kind] = normalizeApiPath(endpoint).split('/');
+        const [top,,, kind] = normalizeApiPath(endpoint).split('/', 4);
         const rawAccept = top === 'repos' && kind === 'contents'
           ? ['-H', 'Accept: application/vnd.github.raw+json']
           : [];

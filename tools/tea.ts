@@ -103,7 +103,7 @@ const BARE: Record<string, BarePolicy> = {
 // matcher; single-letter flags already match as short flags.
 const toLongForm = (arg: string): string => /^-[^-][^=]/.test(arg) ? '-' + arg : arg;
 
-const flagName = (arg: string): string => arg.replace(/^--?/, '').split('=')[0] ?? '';
+const flagName = (arg: string): string => arg.replace(/^--?/, '').split('=', 1)[0] ?? '';
 
 const isFlag = (arg: string): boolean => arg.startsWith('-') && arg !== '-' && arg !== '--';
 

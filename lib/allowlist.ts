@@ -46,7 +46,7 @@ export const rejectSubcommand = (args: readonly string[], allowlist: ReadonlySet
 // safety: false positives (blocking a legitimate flag) are preferable to false
 // negatives (allowing a dangerous abbreviated flag through).
 export const normalizeApiPath = (endpoint: string | undefined): string =>
-  endpoint?.replace(/^\//, '').split('?')[0]?.replace(/\/$/, '') || '';
+  endpoint?.replace(/^\//, '').split('?', 1)[0]?.replace(/\/$/, '') || '';
 
 // Matches a GitHub API endpoint path against a list of segment patterns.
 // `*` matches exactly one segment; trailing `**` matches one or more remaining
@@ -79,7 +79,7 @@ export const rejectBlockedFlags = (args: readonly string[], blockedFlags: Readon
   const flag = args.slice(1).find(a =>
     a !== '--' && a !== '-' &&
     [...blockedFlags].some(f =>
-      a === f || a.startsWith(f + '=') || f.startsWith(a.split('=')[0] ?? a) ||
+      a === f || a.startsWith(f + '=') || f.startsWith(a.split('=', 1)[0] ?? a) ||
       // Short flags (-X) accept concatenated values (-XPOST) in most CLIs
       // (pflag/cobra, getopt). Match any arg starting with a 2-char short flag.
       (f.length === 2 && f[0] === '-' && f[1] !== '-' && a.startsWith(f)),
