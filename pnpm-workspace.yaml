@@ -2,11 +2,6 @@ allowBuilds:
   esbuild: true
   unrs-resolver: false
 
-# 4320 minutes = 3 days, matching the shared Renovate preset's quarantine.
-minimumReleaseAge: 4320
-minimumReleaseAgeExclude:
-  - '@gtbuchanan/*'
-  - '@readonly-mcp/*'
 catalog:
   '@faker-js/faker': ^10.6.0
   '@gtbuchanan/eslint-config': ^0.5.2
@@ -18,3 +13,8 @@ catalog:
   typescript: ^6.0.3
   vitest: ^4.1.6
   zod: ^4.4.3
+# 4320 minutes = 3 days, matching the shared Renovate preset's quarantine.
+minimumReleaseAge: 4320
+minimumReleaseAgeExclude:
+  - '@gtbuchanan/*'
+  - '@readonly-mcp/*'
