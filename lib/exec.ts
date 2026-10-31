@@ -69,8 +69,8 @@ export const exec = async (cmd: string, args: readonly string[]): Promise<CallTo
   try {
     const { stdout, stderr } = await run(cmd, args, EXEC_OPTS);
     return text(stdout, stderr);
-  } catch (err) {
-    return errorResult(err, cmd, args);
+  } catch (error) {
+    return errorResult(error, cmd, args);
   }
 };
 
