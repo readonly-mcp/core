@@ -13,7 +13,7 @@ const run = promisify(execFile);
  * generous while still terminating genuinely stuck processes.
  */
 const TIMEOUT_MS = 30_000;
-const MAX_BUFFER = 2 * 1024 * 1024;
+export const MAX_BUFFER = 2 * 1024 * 1024;
 
 const EXEC_OPTS = { timeout: TIMEOUT_MS, maxBuffer: MAX_BUFFER };
 

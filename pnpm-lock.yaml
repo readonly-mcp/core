@@ -15,6 +15,9 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@faker-js/faker':
+        specifier: ^10.6.0
+        version: 10.6.0
       '@gtbuchanan/tsconfig':
         specifier: ^0.2.0
         version: 0.2.0(typescript@6.0.3)
@@ -185,6 +188,10 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@faker-js/faker@10.6.0':
+    resolution: {integrity: sha512-3RQHgEtvL1Frl/d1cSreo7qhJ3Gk1OdNUai/CtZ8G+wYeRQnJih3s9xJ9/kgYekPQRdwgh0HXRPqMlzWGwivIQ==}
+    engines: {node: ^20.19.0 || ^22.13.0 || ^23.5.0 || >=24.0.0, npm: '>=10'}
 
   '@gtbuchanan/tsconfig@0.2.0':
     resolution: {integrity: sha512-7e4uNsrkLGsKB+U95JIw7h0snrbIM7XZwjOd/MdPlpvpmUKUHk8n6rifS8XF5Bq2Zgx0XGq8cmUW/SBO1vZE1A==}
@@ -1021,6 +1028,8 @@ snapshots:
 
   '@esbuild/win32-x64@0.27.7':
     optional: true
+
+  '@faker-js/faker@10.6.0': {}
 
   '@gtbuchanan/tsconfig@0.2.0(typescript@6.0.3)':
     dependencies:

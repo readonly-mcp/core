@@ -26,6 +26,21 @@ const ResponseSchema = z.object({
 
 type Response = z.infer<typeof ResponseSchema>;
 
+/*
+ * The arguments each result answered, so a failed assertion on the result can
+ * name the generated values it ran with. Keyed weakly by the result object, so
+ * nothing outlives the test that made the call.
+ */
+const requests = new WeakMap<CallToolResult, unknown>();
+
+const remember = (args: unknown, result: CallToolResult): CallToolResult => {
+  requests.set(result, args);
+  return result;
+};
+
+const describeRequest = (result: CallToolResult): string =>
+  `arguments: ${JSON.stringify(requests.get(result))}`;
+
 export const startServer = () => {
   const proc = spawn("node", [SERVER_PATH], {
     stdio: ["pipe", "pipe", "pipe"],
@@ -76,8 +91,8 @@ export const startServer = () => {
 
   const callTool = async (name: string, args: unknown): Promise<CallToolResult> => {
     const resp = await send("tools/call", { name, arguments: args });
-    if (resp.error) return { isError: true, content: [{ type: "text", text: resp.error.message }] };
-    return CallToolResultSchema.parse(resp.result);
+    if (resp.error) return remember(args, { isError: true, content: [{ type: "text", text: resp.error.message }] });
+    return remember(args, CallToolResultSchema.parse(resp.result));
   };
 
   const close = () => {
@@ -105,7 +120,7 @@ export const connectTool = async (register: (server: McpServer) => unknown) => {
   if (tool === undefined || others.length > 0)
     throw new Error(`Expected one registered tool, got: ${tools.map((t) => t.name).join(", ")}`);
   return async (args: Record<string, unknown>): Promise<CallToolResult> =>
-    CallToolResultSchema.parse(await client.callTool({ name: tool.name, arguments: args }));
+    remember(args, CallToolResultSchema.parse(await client.callTool({ name: tool.name, arguments: args })));
 };
 
 /** The text of a result's first content item, which must be text. */
@@ -116,10 +131,10 @@ export const textOf = (result: CallToolResult | null): string => {
   return first.text;
 };
 
-export const assertBlocked = (expect: ExpectStatic, result: CallToolResult, message?: string) => {
+export const assertBlocked = (expect: ExpectStatic, result: CallToolResult, message = `expected blocked, ${describeRequest(result)}`) => {
   expect(result.isError || textOf(result).includes("not allowed"), message).toBe(true);
 };
 
-export const assertNotBlocked = (expect: ExpectStatic, result: CallToolResult, message?: string) => {
+export const assertNotBlocked = (expect: ExpectStatic, result: CallToolResult, message = `expected not blocked, ${describeRequest(result)}`) => {
   expect(result.isError, message).toBeFalsy();
 };

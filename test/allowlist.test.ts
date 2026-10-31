@@ -1,20 +1,24 @@
+import { faker } from "@faker-js/faker";
 import { describe, it } from "vitest";
 import { z } from "zod";
 import {
   ArgsSchema, matchesAllowlist, rejectSubcommand, rejectBlockedFlags,
   matchesApiPath, rejectApiEndpoint,
 } from "../lib/allowlist.ts";
+import * as build from "./builders.ts";
 import { textOf } from "./helpers.ts";
 
 describe("ArgsSchema coercion", () => {
   const schema = z.object(ArgsSchema);
 
   it("accepts a normal array", ({ expect }) => {
-    expect(schema.parse({ args: ["status", "-sb"] }).args).toEqual(["status", "-sb"]);
+    const args = [faker.lorem.word(), build.longFlag()];
+    expect(schema.parse({ args }).args).toEqual(args);
   });
 
   it("coerces a JSON-stringified array to an array", ({ expect }) => {
-    expect(schema.parse({ args: '["log", "--oneline"]' }).args).toEqual(["log", "--oneline"]);
+    const args = [faker.lorem.word(), build.longFlag()];
+    expect(schema.parse({ args: JSON.stringify(args) }).args).toEqual(args);
   });
 
   it("uses default when args is omitted", ({ expect }) => {
@@ -22,119 +26,136 @@ describe("ArgsSchema coercion", () => {
   });
 
   it("rejects a plain string that is not valid JSON array", ({ expect }) => {
-    expect(() => schema.parse({ args: "status -sb" })).toThrow();
+    expect(() => schema.parse({ args: `${faker.lorem.word()} ${build.longFlag()}` })).toThrow();
   });
 
   it("rejects a JSON-stringified object", ({ expect }) => {
-    expect(() => schema.parse({ args: '{"key": "val"}' })).toThrow();
+    expect(() => schema.parse({ args: JSON.stringify({ [faker.lorem.word()]: faker.lorem.word() }) })).toThrow();
   });
 
   it("rejects a JSON-stringified number", ({ expect }) => {
-    expect(() => schema.parse({ args: "42" })).toThrow();
+    expect(() => schema.parse({ args: String(faker.number.int()) })).toThrow();
   });
 });
 
 describe("matchesAllowlist", () => {
-  const single = new Set(["audit", "bin", "ls"]);
-  const multi = new Set(["issue list", "issue view", "pr checks"]);
-  const mixed = new Set(["audit", "licenses list", "store status"]);
-  const deep = new Set(["jira board list", "jira workitem view"]);
-
   describe("single-word allowlist", () => {
+    const word = build.distinctWords();
+    const command = word();
+    const single = new Set([command, word(), word()]);
+
     it("matches exact command", ({ expect }) => {
-      expect(matchesAllowlist(["audit"], single)).toBe(true);
+      expect(matchesAllowlist([command], single)).toBe(true);
     });
 
     it("matches with trailing args", ({ expect }) => {
-      expect(matchesAllowlist(["audit", "--json"], single)).toBe(true);
+      expect(matchesAllowlist([command, build.longFlag()], single)).toBe(true);
     });
 
     it("rejects unknown command", ({ expect }) => {
-      expect(matchesAllowlist(["install"], single)).toBe(false);
+      expect(matchesAllowlist([word()], single)).toBe(false);
     });
   });
 
   describe("two-word allowlist", () => {
+    const word = build.distinctWords();
+    const group = word();
+    const sub = word();
+    const multi = new Set([`${group} ${sub}`, `${group} ${word()}`, `${word()} ${word()}`]);
+
     it("matches two-word subcommand", ({ expect }) => {
-      expect(matchesAllowlist(["issue", "list"], multi)).toBe(true);
+      expect(matchesAllowlist([group, sub], multi)).toBe(true);
     });
 
     it("matches with trailing args", ({ expect }) => {
-      expect(matchesAllowlist(["issue", "list", "--json"], multi)).toBe(true);
+      expect(matchesAllowlist([group, sub, build.longFlag()], multi)).toBe(true);
     });
 
     it("rejects partial match (first word only)", ({ expect }) => {
-      expect(matchesAllowlist(["issue"], multi)).toBe(false);
+      expect(matchesAllowlist([group], multi)).toBe(false);
     });
 
     it("rejects unknown second word", ({ expect }) => {
-      expect(matchesAllowlist(["issue", "create"], multi)).toBe(false);
+      expect(matchesAllowlist([group, word()], multi)).toBe(false);
     });
   });
 
   describe("mixed-depth allowlist", () => {
+    const word = build.distinctWords();
+    const top = word();
+    const group = word();
+    const sub = word();
+    const mixed = new Set([top, `${group} ${sub}`, `${word()} ${word()}`]);
+
     it("matches single-word entry", ({ expect }) => {
-      expect(matchesAllowlist(["audit", "--json"], mixed)).toBe(true);
+      expect(matchesAllowlist([top, build.longFlag()], mixed)).toBe(true);
     });
 
     it("matches two-word entry", ({ expect }) => {
-      expect(matchesAllowlist(["licenses", "list"], mixed)).toBe(true);
+      expect(matchesAllowlist([group, sub], mixed)).toBe(true);
     });
 
     it("rejects partial match of two-word entry", ({ expect }) => {
-      expect(matchesAllowlist(["licenses"], mixed)).toBe(false);
+      expect(matchesAllowlist([group], mixed)).toBe(false);
     });
   });
 
   describe("three-word allowlist", () => {
+    const word = build.distinctWords();
+    const path = [word(), word(), word()];
+    const deep = new Set([path.join(" "), `${path[0]} ${word()} ${word()}`]);
+
     it("matches three-word subcommand", ({ expect }) => {
-      expect(matchesAllowlist(["jira", "board", "list"], deep)).toBe(true);
+      expect(matchesAllowlist(path, deep)).toBe(true);
     });
 
     it("matches with trailing args", ({ expect }) => {
-      expect(matchesAllowlist(["jira", "board", "list", "--json"], deep)).toBe(true);
+      expect(matchesAllowlist([...path, build.longFlag()], deep)).toBe(true);
     });
 
     it("rejects partial match", ({ expect }) => {
-      expect(matchesAllowlist(["jira", "board"], deep)).toBe(false);
+      expect(matchesAllowlist(path.slice(0, 2), deep)).toBe(false);
     });
   });
 
   describe("edge cases", () => {
     it("returns false for empty args", ({ expect }) => {
-      expect(matchesAllowlist([], single)).toBe(false);
+      expect(matchesAllowlist([], new Set(build.words(3)))).toBe(false);
     });
 
     it("does not match single arg containing space against multi-word entry", ({ expect }) => {
       // "issue list" as one arg matches the set entry at depth 0
       // This is a known quirk — safe because execFile passes it as one argv element
       // which the target CLI would reject
-      expect(matchesAllowlist(["issue list"], multi)).toBe(true);
+      const entry = build.words(2).join(" ");
+      expect(matchesAllowlist([entry], new Set([entry]))).toBe(true);
     });
 
     it("handles empty Set", ({ expect }) => {
-      expect(matchesAllowlist(["anything"], new Set())).toBe(false);
+      expect(matchesAllowlist([faker.lorem.word()], new Set())).toBe(false);
     });
   });
 });
 
 describe("rejectSubcommand", () => {
-  const allowlist = new Set(["list", "view"]);
+  const word = build.distinctWords();
+  const allowed = [word(), word()];
+  const allowlist = new Set(allowed);
 
   it("returns isError: true", ({ expect }) => {
-    const result = rejectSubcommand(["delete"], allowlist);
+    const result = rejectSubcommand([word()], allowlist);
     expect(result.isError).toBe(true);
   });
 
   it("includes the rejected subcommand in message", ({ expect }) => {
-    const result = rejectSubcommand(["delete"], allowlist);
-    expect(textOf(result)).toContain("delete");
+    const rejected = word();
+    const result = rejectSubcommand([rejected], allowlist);
+    expect(textOf(result)).toContain(`not allowed: ${rejected}.`);
   });
 
   it("includes allowed subcommands in message", ({ expect }) => {
-    const result = rejectSubcommand(["delete"], allowlist);
-    expect(textOf(result)).toContain("list");
-    expect(textOf(result)).toContain("view");
+    const result = rejectSubcommand([word()], allowlist);
+    expect(textOf(result)).toContain(`Allowed: ${allowed.join(", ")}`);
   });
 
   it("shows (none) for empty args", ({ expect }) => {
@@ -144,21 +165,26 @@ describe("rejectSubcommand", () => {
 });
 
 describe("rejectBlockedFlags", () => {
+  /*
+   * The flag names stay literal: each test pins a specific prefix relation
+   * between the blocked set and the arg (an abbreviation, a longer flag that
+   * merely starts the same way). Subcommands and values are incidental.
+   */
   const blocked = new Set(["--fix", "--registry"]);
 
   describe("exact matches", () => {
     it("blocks exact flag", ({ expect }) => {
-      const result = rejectBlockedFlags(["audit", "--fix"], blocked);
+      const result = rejectBlockedFlags([faker.lorem.word(), "--fix"], blocked);
       expect(result?.isError).toBe(true);
     });
 
     it("blocks flag=value form", ({ expect }) => {
-      const result = rejectBlockedFlags(["view", "--registry=https://evil.com"], blocked);
+      const result = rejectBlockedFlags([faker.lorem.word(), `--registry=${build.httpsUrl()}`], blocked);
       expect(result?.isError).toBe(true);
     });
 
     it("returns null when no blocked flags present", ({ expect }) => {
-      expect(rejectBlockedFlags(["audit", "--json"], blocked)).toBeNull();
+      expect(rejectBlockedFlags([faker.lorem.word(), build.longFlag()], blocked)).toBeNull();
     });
   });
 
@@ -171,28 +197,28 @@ describe("rejectBlockedFlags", () => {
 
   describe("prefix matching (abbreviation defense)", () => {
     it("blocks abbreviated --reg (matches --registry)", ({ expect }) => {
-      const result = rejectBlockedFlags(["view", "--reg", "https://evil.com"], blocked);
+      const result = rejectBlockedFlags([faker.lorem.word(), "--reg", build.httpsUrl()], blocked);
       expect(result?.isError).toBe(true);
     });
 
     it("blocks abbreviated --registr", ({ expect }) => {
-      const result = rejectBlockedFlags(["view", "--registr", "https://evil.com"], blocked);
+      const result = rejectBlockedFlags([faker.lorem.word(), "--registr", build.httpsUrl()], blocked);
       expect(result?.isError).toBe(true);
     });
 
     it("blocks abbreviated --fi (matches --fix)", ({ expect }) => {
-      const result = rejectBlockedFlags(["audit", "--fi"], blocked);
+      const result = rejectBlockedFlags([faker.lorem.word(), "--fi"], blocked);
       expect(result?.isError).toBe(true);
     });
 
     it("blocks abbreviated --reg=value form", ({ expect }) => {
-      const result = rejectBlockedFlags(["view", "--reg=https://evil.com"], blocked);
+      const result = rejectBlockedFlags([faker.lorem.word(), `--reg=${build.httpsUrl()}`], blocked);
       expect(result?.isError).toBe(true);
     });
 
     it("does not block unrelated flag with similar prefix", ({ expect }) => {
       // "--format" does not start any blocked flag, and no blocked flag starts with "--format"
-      expect(rejectBlockedFlags(["view", "--format", "json"], blocked)).toBeNull();
+      expect(rejectBlockedFlags([faker.lorem.word(), "--format", faker.lorem.word()], blocked)).toBeNull();
     });
 
     it("does not block longer flag that starts with blocked flag", ({ expect }) => {
@@ -203,7 +229,7 @@ describe("rejectBlockedFlags", () => {
       // So we check if "--fix".startsWith("--fix-missing-peers") → false
       // and if "--registry".startsWith("--fix-missing-peers") → false
       // So this should pass through
-      expect(rejectBlockedFlags(["audit", "--fix-missing-peers"], blocked)).toBeNull();
+      expect(rejectBlockedFlags([faker.lorem.word(), "--fix-missing-peers"], blocked)).toBeNull();
     });
   });
 
@@ -211,19 +237,20 @@ describe("rejectBlockedFlags", () => {
     const shortBlocked = new Set(["-X", "-f"]);
 
     it("blocks -XPOST (value concatenated to short flag)", ({ expect }) => {
-      const result = rejectBlockedFlags(["api", "endpoint", "-XPOST"], shortBlocked);
+      const result = rejectBlockedFlags([faker.lorem.word(), faker.lorem.word(), "-XPOST"], shortBlocked);
       expect(result?.isError).toBe(true);
     });
 
     it("blocks -fkey=val (value concatenated to short flag)", ({ expect }) => {
-      const result = rejectBlockedFlags(["api", "endpoint", "-fkey=val"], shortBlocked);
+      const arg = `-f${faker.lorem.word()}=${faker.lorem.word()}`;
+      const result = rejectBlockedFlags([faker.lorem.word(), faker.lorem.word(), arg], shortBlocked);
       expect(result?.isError).toBe(true);
     });
 
     it("does not false-positive on long flag starting with single dash char", ({ expect }) => {
       // -Xtra is not a concatenated -X if -X is not in the blocked set for this test
       const unrelated = new Set(["--registry"]);
-      expect(rejectBlockedFlags(["cmd", "-Xtra"], unrelated)).toBeNull();
+      expect(rejectBlockedFlags([faker.lorem.word(), "-Xtra"], unrelated)).toBeNull();
     });
 
     it("does not apply short-flag rule to long flags", ({ expect }) => {
@@ -234,32 +261,32 @@ describe("rejectBlockedFlags", () => {
       // long flag rule doesn't apply (--method.length !== 2)
       // but a.startsWith(f + "=") → "--methodical".startsWith("--method=") → false
       // and f.startsWith(a.split("=")[0]) → "--method".startsWith("--methodical") → false
-      expect(rejectBlockedFlags(["cmd", "--methodical"], longOnly)).toBeNull();
+      expect(rejectBlockedFlags([faker.lorem.word(), "--methodical"], longOnly)).toBeNull();
     });
   });
 
   describe("end-of-options marker", () => {
     it("does not false-positive on bare --", ({ expect }) => {
-      expect(rejectBlockedFlags(["audit", "--", "arg"], blocked)).toBeNull();
+      expect(rejectBlockedFlags([faker.lorem.word(), "--", faker.lorem.word()], blocked)).toBeNull();
     });
 
     it("does not false-positive on bare -", ({ expect }) => {
-      expect(rejectBlockedFlags(["audit", "-", "arg"], blocked)).toBeNull();
+      expect(rejectBlockedFlags([faker.lorem.word(), "-", faker.lorem.word()], blocked)).toBeNull();
     });
   });
 
   describe("edge cases", () => {
     it("returns null for single-element args", ({ expect }) => {
-      expect(rejectBlockedFlags(["audit"], blocked)).toBeNull();
+      expect(rejectBlockedFlags([faker.lorem.word()], blocked)).toBeNull();
     });
 
     it("returns null for empty blocked set", ({ expect }) => {
-      expect(rejectBlockedFlags(["audit", "--anything"], new Set())).toBeNull();
+      expect(rejectBlockedFlags([faker.lorem.word(), build.longFlag()], new Set())).toBeNull();
     });
 
     it("reports the first blocked flag found", ({ expect }) => {
-      const result = rejectBlockedFlags(["audit", "--fix", "--registry"], blocked);
-      expect(textOf(result)).toContain("--fix");
+      const result = rejectBlockedFlags([faker.lorem.word(), "--fix", "--registry"], blocked);
+      expect(textOf(result)).toBe("Flag not allowed: --fix");
     });
   });
 });
@@ -273,69 +300,69 @@ describe("matchesApiPath", () => {
 
   describe("matching", () => {
     it("matches exact pattern with wildcards", ({ expect }) => {
-      expect(matchesApiPath("repos/owner/repo/pulls/123/comments", patterns)).toBe(true);
+      expect(matchesApiPath(build.prCommentsPath(), patterns)).toBe(true);
     });
 
     it("matches second pattern", ({ expect }) => {
-      expect(matchesApiPath("repos/owner/repo/commits/abc/status", patterns)).toBe(true);
+      expect(matchesApiPath(`${build.repoApiPath()}/commits/${build.commitSha()}/status`, patterns)).toBe(true);
     });
   });
 
   describe("trailing ** glob", () => {
     it("matches single trailing segment", ({ expect }) => {
-      expect(matchesApiPath("repos/owner/repo/contents/README.md", patterns)).toBe(true);
+      expect(matchesApiPath(`${build.repoApiPath()}/contents/${build.fileName()}`, patterns)).toBe(true);
     });
 
     it("matches multiple trailing segments", ({ expect }) => {
-      expect(matchesApiPath("repos/owner/repo/contents/src/main.js", patterns)).toBe(true);
+      expect(matchesApiPath(`${build.repoApiPath()}/contents/${build.relativeFilePath()}`, patterns)).toBe(true);
     });
 
     it("matches deeply nested path", ({ expect }) => {
-      expect(matchesApiPath("repos/owner/repo/contents/a/b/c/d", patterns)).toBe(true);
+      expect(matchesApiPath(`${build.repoApiPath()}/contents/${build.words(4).join("/")}`, patterns)).toBe(true);
     });
 
     it("rejects when no trailing segment exists", ({ expect }) => {
-      expect(matchesApiPath("repos/owner/repo/contents", patterns)).toBe(false);
+      expect(matchesApiPath(`${build.repoApiPath()}/contents`, patterns)).toBe(false);
     });
   });
 
   describe("normalization", () => {
     it("strips leading slash", ({ expect }) => {
-      expect(matchesApiPath("/repos/owner/repo/pulls/123/comments", patterns)).toBe(true);
+      expect(matchesApiPath(`/${build.prCommentsPath()}`, patterns)).toBe(true);
     });
 
     it("strips query parameters", ({ expect }) => {
-      expect(matchesApiPath("repos/owner/repo/pulls/123/comments?per_page=100", patterns)).toBe(true);
+      expect(matchesApiPath(`${build.prCommentsPath()}${build.queryString()}`, patterns)).toBe(true);
     });
 
     it("strips trailing slash", ({ expect }) => {
-      expect(matchesApiPath("repos/owner/repo/pulls/123/comments/", patterns)).toBe(true);
+      expect(matchesApiPath(`${build.prCommentsPath()}/`, patterns)).toBe(true);
     });
 
     it("strips leading slash, trailing slash, and query string together", ({ expect }) => {
-      expect(matchesApiPath("/repos/owner/repo/pulls/123/comments/?page=2", patterns)).toBe(true);
+      expect(matchesApiPath(`/${build.prCommentsPath()}/${build.queryString()}`, patterns)).toBe(true);
     });
   });
 
   describe("rejection", () => {
     it("rejects full https URL", ({ expect }) => {
-      expect(matchesApiPath("https://api.github.com/repos/o/r/pulls/1/comments", patterns)).toBe(false);
+      expect(matchesApiPath(`https://api.github.com/${build.prCommentsPath()}`, patterns)).toBe(false);
     });
 
     it("rejects full http URL", ({ expect }) => {
-      expect(matchesApiPath("http://api.github.com/repos/o/r/pulls/1/comments", patterns)).toBe(false);
+      expect(matchesApiPath(`http://api.github.com/${build.prCommentsPath()}`, patterns)).toBe(false);
     });
 
     it("rejects too few segments", ({ expect }) => {
-      expect(matchesApiPath("repos/owner/repo/pulls/123", patterns)).toBe(false);
+      expect(matchesApiPath(`${build.repoApiPath()}/pulls/${build.resourceId()}`, patterns)).toBe(false);
     });
 
     it("rejects too many segments (non-** pattern)", ({ expect }) => {
-      expect(matchesApiPath("repos/owner/repo/pulls/123/comments/extra", patterns)).toBe(false);
+      expect(matchesApiPath(`${build.prCommentsPath()}/${faker.lorem.word()}`, patterns)).toBe(false);
     });
 
     it("rejects unmatched path", ({ expect }) => {
-      expect(matchesApiPath("repos/owner/repo/git/refs", patterns)).toBe(false);
+      expect(matchesApiPath(`${build.repoApiPath()}/git/refs`, patterns)).toBe(false);
     });
 
     it("rejects empty endpoint", ({ expect }) => {
@@ -349,17 +376,17 @@ describe("matchesApiPath", () => {
 
   describe("edge cases", () => {
     it("returns false for empty patterns array", ({ expect }) => {
-      expect(matchesApiPath("repos/owner/repo/pulls/1/comments", [])).toBe(false);
+      expect(matchesApiPath(build.prCommentsPath(), [])).toBe(false);
     });
 
     it("** requires at least one trailing segment", ({ expect }) => {
-      expect(matchesApiPath("repos/owner/repo/contents", patterns)).toBe(false);
+      expect(matchesApiPath(`${build.repoApiPath()}/contents`, patterns)).toBe(false);
     });
 
     it("contents/. matches (dot is a valid trailing segment)", ({ expect }) => {
       // By design — `.` is a valid directory entry; GitHub's API interprets it
       // as the repo root. The `**` glob accepts any content after the prefix.
-      expect(matchesApiPath("repos/owner/repo/contents/.", patterns)).toBe(true);
+      expect(matchesApiPath(`${build.repoApiPath()}/contents/.`, patterns)).toBe(true);
     });
   });
 });
@@ -368,17 +395,18 @@ describe("rejectApiEndpoint", () => {
   const patterns = ["repos/*/pulls/*/comments"];
 
   it("returns isError: true", ({ expect }) => {
-    const result = rejectApiEndpoint("repos/owner/bad/path", patterns);
+    const result = rejectApiEndpoint(`${build.repoApiPath()}/${faker.lorem.word()}`, patterns);
     expect(result.isError).toBe(true);
   });
 
   it("includes normalized endpoint in message", ({ expect }) => {
-    const result = rejectApiEndpoint("/repos/owner/bad/path?foo=bar", patterns);
-    expect(textOf(result)).toContain("repos/owner/bad/path");
+    const endpoint = `${build.repoApiPath()}/${faker.lorem.word()}`;
+    const result = rejectApiEndpoint(`/${endpoint}${build.queryString()}`, patterns);
+    expect(textOf(result)).toContain(`not allowed: ${endpoint}.`);
   });
 
   it("includes allowed patterns in message", ({ expect }) => {
-    const result = rejectApiEndpoint("bad/path", patterns);
+    const result = rejectApiEndpoint(build.words(2).join("/"), patterns);
     expect(textOf(result)).toContain("repos/*/pulls/*/comments");
   });
 

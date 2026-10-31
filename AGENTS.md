@@ -18,6 +18,7 @@ scripts/
 test/
   <tool>.test.ts    Per-tool security + functionality tests
   shell-injection.test.ts   Cross-tool injection attack tests
+  builders.ts       Arbitrary test-data builders (faker)
   helpers.ts        Shared test utilities
 ```
 
@@ -65,6 +66,15 @@ Tests validate the security boundary, not just functionality. Every blocked
 flag, blocked subcommand, and injection vector has a corresponding test.
 If you add a new restriction, add a test that proves it blocks the attack.
 If you relax a restriction, justify it in the commit message.
+
+Generate incidental values (owners, ids, file names, output text) from
+`test/builders.ts` (`import * as build from "./builders.ts"`) or from
+`@faker-js/faker` for raw primitives, and capture each in a local the
+assertion references. Write a value literally when the code under test
+branches on it: an allowlisted subcommand, a blocked flag, the prefix
+relation between two flags, the shape of an attack. Give `it.for` rows that
+carry generated values an explicit `name` rather than deriving it from their
+args, so test names stay the same across runs.
 
 ## Formatting
 
